@@ -1,5 +1,8 @@
 package com.ethan.byztine.domain;
 
+import com.ethan.byztine.domain.event.GameEvent;
+import com.ethan.byztine.domain.event.EventResult;
+
 import java.util.UUID;
 
 public class Character {
@@ -8,6 +11,11 @@ public class Character {
     private String name;
     private Level level;
     private Energy energy;
+    private static final int BASE_ENERGY = 10;
+
+    private int calculateMaxEnergy() {
+        return BASE_ENERGY + (level.getCurrentLevel() - 1);
+    }
 
     public Character(String name) {
         if (name == null || name.isBlank()) {
@@ -17,7 +25,15 @@ public class Character {
         this.id = UUID.randomUUID();
         this.name = name;
         this.level = new Level();
-        this.energy = new Energy(10);
+        this.energy = new Energy(calculateMaxEnergy());
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public Level getLevel() {
@@ -29,15 +45,28 @@ public class Character {
     }
 
     public void gainExperience(int amount) {
-        int previousLevel = level.getCurrentLevel();
 
-        level.addExperience(amount);
+        boolean leveledUp = level.addExperience(amount);
 
-        int newLevel = level.getCurrentLevel();
-
-        if (newLevel > previousLevel) {
-            int newMaxEnergy = 10 + (newLevel - 1);
-            energy.updateMaxEnergy(newMaxEnergy);
+        if (leveledUp) {
+            energy.updateMaxEnergy(calculateMaxEnergy());
         }
     }
+
+    public EventResult executeEvent(GameEvent event) {
+
+        int levelBefore = level.getCurrentLevel();
+
+        energy.consume(event.energyCost());
+        gainExperience(event.experienceReward());
+
+        int levelAfter = level.getCurrentLevel();
+
+        return new EventResult(
+                event.energyCost(),
+                event.experienceReward(),
+                levelBefore,
+                levelAfter);
+    }
+
 }

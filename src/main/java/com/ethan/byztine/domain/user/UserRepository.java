@@ -1,4 +1,4 @@
-package com.ethan.byztine.domain;
+package com.ethan.byztine.domain.user;
 
 import java.util.Optional;
 import java.util.UUID;

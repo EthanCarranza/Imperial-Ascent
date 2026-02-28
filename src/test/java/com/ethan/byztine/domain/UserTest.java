@@ -2,6 +2,8 @@ package com.ethan.byztine.domain;
 
 import org.junit.jupiter.api.Test;
 
+import com.ethan.byztine.domain.user.User;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {

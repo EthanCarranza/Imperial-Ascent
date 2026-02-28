@@ -1,6 +1,6 @@
 package com.ethan.byztine.application;
 
-import com.ethan.byztine.domain.User;
+import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.infrastructure.InMemoryUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

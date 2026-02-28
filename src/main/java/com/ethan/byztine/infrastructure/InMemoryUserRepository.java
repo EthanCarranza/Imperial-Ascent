@@ -1,9 +1,9 @@
 package com.ethan.byztine.infrastructure;
 
-import com.ethan.byztine.domain.User;
-import com.ethan.byztine.domain.UserRepository;
-
 import org.springframework.stereotype.Repository;
+
+import com.ethan.byztine.domain.user.User;
+import com.ethan.byztine.domain.user.UserRepository;
 
 import java.util.*;
 

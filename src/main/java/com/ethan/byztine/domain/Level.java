@@ -22,16 +22,28 @@ public class Level {
         return currentExperience;
     }
 
-    public void addExperience(int amount) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("Experience amount cannot be negative");
+    public boolean addExperience(int amount) {
+
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Experience must be positive");
         }
 
-        this.currentExperience += amount;
+        currentExperience += amount;
 
-        while (this.currentExperience >= experienceRequiredForNextLevel()) {
-            this.currentExperience -= experienceRequiredForNextLevel();
-            this.currentLevel++;
+        boolean leveledUp = false;
+
+        while (true) {
+            int required = experienceRequiredForNextLevel();
+
+            if (currentExperience < required) {
+                break;
+            }
+
+            currentExperience -= required;
+            currentLevel++;
+            leveledUp = true;
         }
+
+        return leveledUp;
     }
 }
