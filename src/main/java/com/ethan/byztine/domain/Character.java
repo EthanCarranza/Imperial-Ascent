@@ -70,21 +70,7 @@ public class Character {
     }
 
     public EventResult executeEvent(GameEvent event) {
-
-        int levelBefore = level.getCurrentLevel();
-
-        energy.consume(event.energyCost());
-        gainExperience(event.experienceReward());
-        addGold(event.goldReward());
-
-        int levelAfter = level.getCurrentLevel();
-
-        return new EventResult(
-                event.energyCost(),
-                event.experienceReward(),
-                event.goldReward(),
-                levelBefore,
-                levelAfter);
+        return event.execute(this);
     }
 
     public void addGold(int amount) {

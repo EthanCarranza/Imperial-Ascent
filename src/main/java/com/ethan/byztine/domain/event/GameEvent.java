@@ -1,10 +1,9 @@
 package com.ethan.byztine.domain.event;
 
+import com.ethan.byztine.domain.Character;
+
 public interface GameEvent {
 
-    int energyCost();
+    EventResult execute(Character character);
 
-    int experienceReward();
-
-    int goldReward();
 }

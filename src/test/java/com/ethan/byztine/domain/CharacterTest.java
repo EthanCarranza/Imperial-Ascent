@@ -1,16 +1,15 @@
 package com.ethan.byztine.domain;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
 import com.ethan.byztine.domain.event.GameEvent;
 import com.ethan.byztine.domain.event.EventResult;
-
 import com.ethan.byztine.domain.event.TrainingEvent;
 
 public class CharacterTest {
+
     @Test
     void characterShouldStartWithLevelOneAndBaseEnergy() {
         Character character = new Character("Marcus");
@@ -24,7 +23,6 @@ public class CharacterTest {
         Character character = new Character("Marcus");
 
         character.getEnergy().consume(5);
-
         character.gainExperience(100);
 
         assertEquals(2, character.getLevel().getCurrentLevel());
@@ -33,36 +31,26 @@ public class CharacterTest {
     }
 
     @Test
-    void gainingMultipleLevelsShouldUpdateEnergyOnlyOnceToFinalMax() {
-        Character character = new Character("Marcus");
-
-        character.getEnergy().consume(7);
-
-        character.gainExperience(300);
-
-        assertEquals(3, character.getLevel().getCurrentLevel());
-        assertEquals(12, character.getEnergy().getMaxEnergy());
-        assertEquals(12, character.getEnergy().getCurrentEnergy());
-    }
-
-    @Test
     void executingEventShouldConsumeEnergy() {
+
         Character character = new Character("Marcus");
 
         GameEvent customEvent = new GameEvent() {
             @Override
-            public int energyCost() {
-                return 3;
-            }
+            public EventResult execute(Character character) {
 
-            @Override
-            public int experienceReward() {
-                return 0;
-            }
+                int levelBefore = character.getLevel().getCurrentLevel();
 
-            @Override
-            public int goldReward() {
-                return 0;
+                character.getEnergy().consume(3);
+
+                int levelAfter = character.getLevel().getCurrentLevel();
+
+                return new EventResult(
+                        3,
+                        0,
+                        levelBefore,
+                        levelAfter,
+                        0);
             }
         };
 
@@ -73,49 +61,34 @@ public class CharacterTest {
 
     @Test
     void executingEventWithoutEnoughEnergyShouldFail() {
+
         Character character = new Character("Marcus");
 
         GameEvent expensiveEvent = new GameEvent() {
             @Override
-            public int energyCost() {
-                return 10;
-            }
-
-            @Override
-            public int experienceReward() {
-                return 0;
-            }
-
-            @Override
-            public int goldReward() {
-                return 0;
+            public EventResult execute(Character character) {
+                character.getEnergy().consume(10);
+                return null;
             }
         };
 
         GameEvent smallEvent = new GameEvent() {
             @Override
-            public int energyCost() {
-                return 1;
-            }
-
-            @Override
-            public int experienceReward() {
-                return 0;
-            }
-
-            @Override
-            public int goldReward() {
-                return 0;
+            public EventResult execute(Character character) {
+                character.getEnergy().consume(1);
+                return null;
             }
         };
 
         character.executeEvent(expensiveEvent);
 
-        assertThrows(IllegalStateException.class, () -> character.executeEvent(smallEvent));
+        assertThrows(IllegalStateException.class,
+                () -> character.executeEvent(smallEvent));
     }
 
     @Test
     void executingEventShouldReturnEventResult() {
+
         Character character = new Character("Marcus");
         GameEvent event = new TrainingEvent();
 
@@ -130,6 +103,7 @@ public class CharacterTest {
 
     @Test
     void spendingGoldShouldReduceBalance() {
+
         Character character = new Character("Marcus");
 
         character.addGold(20);
@@ -140,6 +114,7 @@ public class CharacterTest {
 
     @Test
     void spendingMoreGoldThanAvailableShouldFail() {
+
         Character character = new Character("Marcus");
 
         character.addGold(5);

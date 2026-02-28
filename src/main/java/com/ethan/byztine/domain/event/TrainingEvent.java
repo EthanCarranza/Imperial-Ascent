@@ -1,18 +1,29 @@
 package com.ethan.byztine.domain.event;
 
-public class TrainingEvent extends BaseEvent {
+import com.ethan.byztine.domain.Character;
 
-    public TrainingEvent() {
-        super();
-    }
+public class TrainingEvent implements GameEvent {
 
-    @Override
-    public int experienceReward() {
-        return 50;
-    }
+    private static final int ENERGY_COST = 1;
+    private static final int XP_REWARD = 50;
+    private static final int GOLD_REWARD = 10;
 
     @Override
-    public int goldReward() {
-        return 10;
+    public EventResult execute(Character character) {
+
+        int levelBefore = character.getLevel().getCurrentLevel();
+
+        character.getEnergy().consume(ENERGY_COST);
+        character.gainExperience(XP_REWARD);
+        character.addGold(GOLD_REWARD);
+
+        int levelAfter = character.getLevel().getCurrentLevel();
+
+        return new EventResult(
+                ENERGY_COST,
+                XP_REWARD,
+                levelBefore,
+                levelAfter,
+                GOLD_REWARD);
     }
 }

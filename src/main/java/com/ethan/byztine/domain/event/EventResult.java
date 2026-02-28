@@ -4,21 +4,20 @@ public class EventResult {
 
     private final int energySpent;
     private final int experienceGained;
-    private final int goldGained;
     private final int levelBefore;
     private final int levelAfter;
+    private final int goldGained;
 
     public EventResult(int energySpent,
             int experienceGained,
-            int goldGained,
             int levelBefore,
-            int levelAfter) {
-
+            int levelAfter,
+            int goldGained) {
         this.energySpent = energySpent;
         this.experienceGained = experienceGained;
-        this.goldGained = goldGained;
         this.levelBefore = levelBefore;
         this.levelAfter = levelAfter;
+        this.goldGained = goldGained;
     }
 
     public int getEnergySpent() {
@@ -29,16 +28,16 @@ public class EventResult {
         return experienceGained;
     }
 
-    public int getGoldGained() {
-        return goldGained;
-    }
-
     public int getLevelBefore() {
         return levelBefore;
     }
 
     public int getLevelAfter() {
         return levelAfter;
+    }
+
+    public int getGoldGained() {
+        return goldGained;
     }
 
     public boolean didLevelUp() {
