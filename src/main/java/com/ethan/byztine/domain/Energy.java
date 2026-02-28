@@ -1,9 +1,15 @@
 package com.ethan.byztine.domain;
 
+import jakarta.persistence.*;
+
+@Embeddable
 public class Energy {
 
     private int currentEnergy;
     private int maxEnergy;
+
+    protected Energy() {
+    }
 
     public Energy(int maxEnergy) {
         if (maxEnergy <= 0) {

@@ -12,8 +12,23 @@ public class InMemoryUserRepository implements UserRepository {
 
     private final Map<UUID, User> storage = new HashMap<>();
 
+    private void assignId(User user) {
+        try {
+            var field = User.class.getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(user, UUID.randomUUID());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void save(User user) {
+
+        if (user.getId() == null) {
+            assignId(user);
+        }
+
         storage.put(user.getId(), user);
     }
 

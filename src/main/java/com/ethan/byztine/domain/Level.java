@@ -1,5 +1,8 @@
 package com.ethan.byztine.domain;
 
+import jakarta.persistence.*;
+
+@Embeddable
 public class Level {
 
     private int currentLevel;
@@ -24,7 +27,7 @@ public class Level {
 
     public boolean addExperience(int amount) {
 
-        if (amount <= 0) {
+        if (amount < 0) {
             throw new IllegalArgumentException("Experience must be positive");
         }
 

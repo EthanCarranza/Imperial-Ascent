@@ -59,6 +59,11 @@ public class CharacterTest {
             public int experienceReward() {
                 return 0;
             }
+
+            @Override
+            public int goldReward() {
+                return 0;
+            }
         };
 
         character.executeEvent(customEvent);
@@ -80,6 +85,11 @@ public class CharacterTest {
             public int experienceReward() {
                 return 0;
             }
+
+            @Override
+            public int goldReward() {
+                return 0;
+            }
         };
 
         GameEvent smallEvent = new GameEvent() {
@@ -90,6 +100,11 @@ public class CharacterTest {
 
             @Override
             public int experienceReward() {
+                return 0;
+            }
+
+            @Override
+            public int goldReward() {
                 return 0;
             }
         };
@@ -110,5 +125,26 @@ public class CharacterTest {
         assertEquals(50, result.getExperienceGained());
         assertEquals(1, result.getLevelBefore());
         assertEquals(1, result.getLevelAfter());
+        assertEquals(10, result.getGoldGained());
+    }
+
+    @Test
+    void spendingGoldShouldReduceBalance() {
+        Character character = new Character("Marcus");
+
+        character.addGold(20);
+        character.spendGold(5);
+
+        assertEquals(15, character.getGold());
+    }
+
+    @Test
+    void spendingMoreGoldThanAvailableShouldFail() {
+        Character character = new Character("Marcus");
+
+        character.addGold(5);
+
+        assertThrows(IllegalStateException.class,
+                () -> character.spendGold(10));
     }
 }
