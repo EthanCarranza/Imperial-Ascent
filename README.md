@@ -235,3 +235,71 @@ User → Character → (Future systems)
 - Encapsulated formulas inside domain objects
 - Early unit testing
 - Incremental evolution without premature overengineering
+
+## 7. Version 0.1 – Implementation Summary
+
+Version 0.1 establishes the technical and architectural foundation of the engine.
+
+### Implemented Features
+
+- User registration and persistence using Spring Data JPA.
+- One-to-one association between `User` and `Character`.
+- Character progression system:
+  - Experience accumulation.
+  - Level-up logic with overflow handling.
+  - Energy consumption per event.
+- Deterministic event execution model.
+- Immutable `EventResult` object capturing:
+  - Energy spent
+  - Experience gained
+  - Level before execution
+  - Level after execution
+  - Gold gained
+- Transactional service layer ensuring atomic state updates.
+- PostgreSQL integration via Docker for local development.
+- Unit tests for:
+  - Domain logic (`Level`, `Energy`, `Character`)
+  - Persistence layer
+  - Application services
+
+### Architectural Notes
+
+- Domain logic is encapsulated inside entities and value objects.
+- Business rules are not delegated to services.
+- Services orchestrate, but do not implement core domain logic.
+- JPA is used strictly as a persistence mechanism, not as a business engine.
+- All mutations occur within transactional boundaries.
+
+This version prioritizes structural correctness and domain clarity over feature breadth.
+
+## 8. Version 0.2 – Controlled Expansion
+
+Version 0.2 will expand the engine toward economic and combat mechanics while preserving architectural clarity.
+
+### Objectives
+
+1. Introduce a basic economy system:
+   - Gold accumulation through events.
+   - Gold spending with invariant enforcement.
+   - Domain-level validation (no negative balance).
+
+2. Introduce a basic round-based combat prototype:
+   - Isolated `CombatEngine`.
+   - Snapshot-based combat state (no direct entity mutation).
+   - Deterministic resolution with optional bounded randomness.
+   - Maximum round cap to avoid infinite loops.
+
+3. Introduce stat system foundations:
+   - Base attributes (Strength, Defense, Agility).
+   - Encapsulated stat calculations.
+   - No skill trees yet — only structural preparation.
+
+### Architectural Goals for 0.2
+
+- Keep domain cohesive.
+- Avoid leaking combat logic into `Character`.
+- Introduce dedicated domain services where appropriate.
+- Preserve modular monolith structure.
+- Maintain full test coverage.
+
+Version 0.2 is not about feature explosion, it is about controlled growth.
