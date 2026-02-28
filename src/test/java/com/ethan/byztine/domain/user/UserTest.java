@@ -1,4 +1,4 @@
-package com.ethan.byztine.domain;
+package com.ethan.byztine.domain.user;
 
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +10,6 @@ class UserTest {
     void shouldCreateUserWithDefaultRole() {
         User user = new User("ethan", "ethan@email.com", "hash123");
 
-        assertNotNull(user.getId());
         assertEquals(User.Role.USER, user.getRole());
         assertFalse(user.isAdmin());
         assertNotNull(user.getCreatedAt());

@@ -1,10 +1,11 @@
 package com.ethan.byztine.application;
 
-import com.ethan.byztine.domain.User;
-import com.ethan.byztine.domain.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.stereotype.Service;
+
+import com.ethan.byztine.domain.user.User;
+import com.ethan.byztine.domain.user.UserRepository;
 
 @Service
 public class UserService {

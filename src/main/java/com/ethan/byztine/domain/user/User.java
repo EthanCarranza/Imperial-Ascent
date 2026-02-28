@@ -1,7 +1,12 @@
-package com.ethan.byztine.domain;
+package com.ethan.byztine.domain.user;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import jakarta.persistence.*;
+import com.ethan.byztine.domain.Character;
+
+@Entity
+@Table(name = "users")
 
 public class User {
 
@@ -12,12 +17,32 @@ public class User {
         ADMIN
     }
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false)
     private String passwordHash;
-    private Role role;
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "character_id")
+    private Character character;
+
+    protected User() {
+        // Required by JPA
+    }
 
     public User(String username, String email, String passwordHash) {
 
@@ -33,7 +58,6 @@ public class User {
             throw new IllegalArgumentException("Password hash cannot be null or empty");
         }
 
-        this.id = UUID.randomUUID();
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
@@ -52,8 +76,19 @@ public class User {
         return this.passwordHash.equals(passwordHash);
     }
 
+    public void assignCharacter(Character character) {
+        if (this.character != null) {
+            throw new IllegalStateException("User already has a character");
+        }
+        this.character = character;
+    }
+
     public UUID getId() {
         return id;
+    }
+
+    void setId(UUID id) {
+        this.id = id;
     }
 
     public String getUsername() {
@@ -84,4 +119,7 @@ public class User {
         this.role = Role.USER;
     }
 
+    public Character getCharacter() {
+        return character;
+    }
 }

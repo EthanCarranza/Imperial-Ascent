@@ -2,7 +2,15 @@ spring:
   application:
     name: Byzantine Simulation Engine
 
-  # Desactivamos temporalmente la autoconfiguración de DataSource hasta que configuremos PostgreSQL
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/byzantine
+    username: byzantine
+    password: byzantine
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        "[format_sql]": true
