@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/byzantine
+    username: ${DB_USERNAME:byzantine}
+    password: ${DB_PASSWORD:byzantine}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

@@ -1,12 +1,13 @@
 package com.ethan.byztine.infrastructure;
 
 import org.springframework.stereotype.Repository;
-
+import org.springframework.context.annotation.Profile;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 
 import java.util.*;
 
+@Profile("test")
 @Repository
 public class InMemoryUserRepository implements UserRepository {
 
