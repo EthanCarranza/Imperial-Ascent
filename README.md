@@ -1,5 +1,110 @@
 # Byzantine Simulation Engine
 
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Java 17+
+- Git
+- Docker (optional, only if using local PostgreSQL)
+
+---
+
+### 📦 Clone the repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+cd YOUR_REPOSITORY
+```
+
+---
+
+### 🔧 Install dependencies
+
+Using Maven Wrapper (recommended):
+
+```bash
+./mvnw clean install
+```
+
+On Windows (PowerShell):
+
+```bash
+.\mvnw clean install
+```
+
+---
+
+### ▶️ Run the application (DEV profile)
+
+```bash
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+On Windows (PowerShell):
+
+```bash
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+For the environment variables setup and run:
+
+````bash
+.\run-dev.ps1
+```
+
+---
+
+### 🌐 Access the application
+
+- Debug panel: http://localhost:8080/debug
+- Health check: http://localhost:8080/api/health
+
+---
+
+### 🧪 Run tests
+
+```bash
+./mvnw test
+````
+
+Tests use an in-memory H2 database and do not require external services.
+
+---
+
+### ⚙️ Profiles
+
+| Profile | Description                         |
+| ------- | ----------------------------------- |
+| `dev`   | Uses PostgreSQL (Supabase or local) |
+| `test`  | Uses H2 in-memory database          |
+
+---
+
+### 🗄️ Database Configuration
+
+#### DEV (Supabase example)
+
+Configured in `application-dev.yml`:
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://YOUR_HOST:PORT/postgres
+    username: YOUR_USER
+    password: YOUR_PASSWORD
+```
+
+---
+
+### 📝 Notes
+
+- Always use the Maven Wrapper (`mvnw`) to avoid environment issues.
+- In PowerShell, JVM arguments must be wrapped in quotes.
+- The application will automatically create/update the database schema.
+
+---
+
 ## 1. Project Vision
 
 ### Description
