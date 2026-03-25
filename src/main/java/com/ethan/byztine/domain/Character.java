@@ -1,30 +1,31 @@
 package com.ethan.byztine.domain;
 
 import com.ethan.byztine.domain.event.GameEvent;
+import com.ethan.byztine.domain.event.EventResult;
 
 import jakarta.persistence.*;
-
-import com.ethan.byztine.domain.event.EventResult;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "characters")
 public class Character {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
     private String name;
+
     @Embedded
     private Level level;
+
     @Embedded
     private Energy energy;
-    private static final int BASE_ENERGY = 10;
-    private int gold;
 
-    private int calculateMaxEnergy() {
-        return BASE_ENERGY + (level.getCurrentLevel() - 1);
-    }
+    private static final int BASE_ENERGY = 10;
+
+    private int gold;
 
     protected Character() {
     }
@@ -40,6 +41,10 @@ public class Character {
         this.gold = 0;
     }
 
+    private int calculateMaxEnergy() {
+        return BASE_ENERGY + (level.getCurrentLevel() - 1);
+    }
+
     public UUID getId() {
         return id;
     }
@@ -52,6 +57,14 @@ public class Character {
         return level;
     }
 
+    public int getCurrentLevel() {
+        return level.getCurrentLevel();
+    }
+
+    public int getCurrentExperience() {
+        return level.getCurrentExperience();
+    }
+
     public Energy getEnergy() {
         return energy;
     }
@@ -61,7 +74,6 @@ public class Character {
     }
 
     public void gainExperience(int amount) {
-
         boolean leveledUp = level.addExperience(amount);
 
         if (leveledUp) {
@@ -90,4 +102,22 @@ public class Character {
         this.gold -= amount;
     }
 
+    // 🔥 NUEVO: lógica encapsulada del entrenamiento
+    public EventResult applyTraining(int energyCost, int xp, int goldReward) {
+
+        int levelBefore = getCurrentLevel();
+
+        energy.consume(energyCost);
+        gainExperience(xp);
+        addGold(goldReward);
+
+        int levelAfter = getCurrentLevel();
+
+        return new EventResult(
+                energyCost,
+                xp,
+                levelBefore,
+                levelAfter,
+                goldReward);
+    }
 }

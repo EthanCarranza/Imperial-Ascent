@@ -102,6 +102,7 @@ spring:
 - Always use the Maven Wrapper (`mvnw`) to avoid environment issues.
 - In PowerShell, JVM arguments must be wrapped in quotes.
 - The application will automatically create/update the database schema.
+- When using Supabase pooler (port 6543), add: ?prepareThreshold=0 to avoid prepared statement conflicts.
 
 ---
 

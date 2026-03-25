@@ -2,28 +2,33 @@ package com.ethan.byztine.domain.event;
 
 import com.ethan.byztine.domain.Character;
 
+import java.util.Random;
+
 public class TrainingEvent implements GameEvent {
 
     private static final int ENERGY_COST = 1;
-    private static final int XP_REWARD = 50;
     private static final int GOLD_REWARD = 10;
+
+    private final Random random;
+
+    // 👉 constructor para producción
+    public TrainingEvent() {
+        this.random = new Random();
+    }
+
+    // 👉 constructor para tests (IMPORTANTE)
+    public TrainingEvent(Random random) {
+        this.random = random;
+    }
 
     @Override
     public EventResult execute(Character character) {
 
-        int levelBefore = character.getLevel().getCurrentLevel();
+        int xpReward = 40 + random.nextInt(21); // 40–60 XP
 
-        character.getEnergy().consume(ENERGY_COST);
-        character.gainExperience(XP_REWARD);
-        character.addGold(GOLD_REWARD);
-
-        int levelAfter = character.getLevel().getCurrentLevel();
-
-        return new EventResult(
+        return character.applyTraining(
                 ENERGY_COST,
-                XP_REWARD,
-                levelBefore,
-                levelAfter,
+                xpReward,
                 GOLD_REWARD);
     }
 }

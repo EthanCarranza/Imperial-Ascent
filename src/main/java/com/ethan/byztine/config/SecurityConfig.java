@@ -15,13 +15,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // importante para formularios debug
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/health",
-                                "/debug",
-                                "/api/debug/**")
-                        .permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/debug").permitAll()
+                        .requestMatchers("/api/debug/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
 
