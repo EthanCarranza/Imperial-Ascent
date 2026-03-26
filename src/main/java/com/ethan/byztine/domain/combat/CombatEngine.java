@@ -1,5 +1,8 @@
 package com.ethan.byztine.domain.combat;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class CombatEngine {
 
     private static final int MAX_ROUNDS = 100;

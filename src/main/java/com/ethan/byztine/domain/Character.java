@@ -23,6 +23,9 @@ public class Character {
     @Embedded
     private Energy energy;
 
+    @Embedded
+    private Stats stats;
+
     private static final int BASE_ENERGY = 10;
 
     private int gold;
@@ -39,6 +42,7 @@ public class Character {
         this.level = new Level();
         this.energy = new Energy(calculateMaxEnergy());
         this.gold = 0;
+        this.stats = new Stats(5, 5, 5); // base
     }
 
     private int calculateMaxEnergy() {
@@ -55,6 +59,10 @@ public class Character {
 
     public Level getLevel() {
         return level;
+    }
+
+    public Stats getStats() {
+        return stats;
     }
 
     public int getCurrentLevel() {

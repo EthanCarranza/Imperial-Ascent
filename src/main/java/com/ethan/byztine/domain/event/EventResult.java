@@ -43,4 +43,13 @@ public class EventResult {
     public boolean didLevelUp() {
         return levelAfter > levelBefore;
     }
+
+    @Override
+    public String toString() {
+        return "Energy: " + energySpent +
+                "\nXP: " + experienceGained +
+                "\nGold: " + goldGained +
+                "\nLevel: " + levelBefore + " → " + levelAfter +
+                (didLevelUp() ? "\n LEVEL UP!" : "");
+    }
 }

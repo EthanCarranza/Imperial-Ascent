@@ -1,5 +1,8 @@
 package com.ethan.byztine.domain.combat;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class DefaultDamageCalculator implements DamageCalculator {
 
     private final RandomProvider randomProvider;

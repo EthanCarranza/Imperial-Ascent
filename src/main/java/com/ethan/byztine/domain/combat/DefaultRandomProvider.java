@@ -1,7 +1,9 @@
 package com.ethan.byztine.domain.combat;
 
 import java.util.Random;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DefaultRandomProvider implements RandomProvider {
 
     private final Random random = new Random();

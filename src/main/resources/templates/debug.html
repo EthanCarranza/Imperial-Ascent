@@ -95,8 +95,15 @@
       </form>
 
       <h2>Train</h2>
+
       <form onsubmit="submitForm(event, '/api/debug/train')">
         <input name="email" placeholder="Email" />
+        <select name="stat">
+          <option value="str">Strength</option>
+          <option value="int">Intelligence</option>
+          <option value="agi">Agility</option>
+        </select>
+
         <button type="submit">Train</button>
       </form>
 
@@ -111,6 +118,38 @@
         <input name="email" placeholder="Email" />
         <input name="amount" type="number" placeholder="Gold" />
         <button type="submit">Add</button>
+      </form>
+      <hr />
+
+      <h2>Add Strength</h2>
+
+      <form onsubmit="submitForm(event, '/api/debug/add-strength')">
+        <input name="email" placeholder="User Email" />
+        <input name="amount" type="number" placeholder="Amount" />
+        <button type="submit">Add STR</button>
+      </form>
+
+      <h2>Add Intelligence</h2>
+
+      <form onsubmit="submitForm(event, '/api/debug/add-intelligence')">
+        <input name="email" placeholder="User Email" />
+        <input name="amount" type="number" placeholder="Amount" />
+        <button type="submit">Add INT</button>
+      </form>
+
+      <h2>Add Agility</h2>
+
+      <form onsubmit="submitForm(event, '/api/debug/add-agility')">
+        <input name="email" placeholder="User Email" />
+        <input name="amount" type="number" placeholder="Amount" />
+        <button type="submit">Add AGI</button>
+      </form>
+      <h2>Combat</h2>
+
+      <form onsubmit="submitForm(event, '/api/debug/combat')">
+        <input name="attackerEmail" placeholder="Attacker email" />
+        <input name="defenderEmail" placeholder="Defender email" />
+        <button type="submit">Fight</button>
       </form>
     </div>
 
@@ -141,7 +180,10 @@
           }
 
           const text = await response.text();
-          document.getElementById("output").innerText = text;
+          document.getElementById("output").innerHTML =
+            text.replace(/\n/g, "<br>") +
+            "<hr>" +
+            document.getElementById("output").innerHTML;
         } catch (err) {
           document.getElementById("output").innerText = "Error: " + err;
         }

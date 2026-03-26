@@ -36,12 +36,12 @@ class ExecuteEventServiceTest {
                 new TrainingEvent());
 
         assertEquals(1, result.getEnergySpent());
-        assertEquals(50, result.getExperienceGained());
+        assertEquals(20, result.getExperienceGained());
 
         User reloaded = userRepository.findById(user.getId()).get();
 
         assertEquals(9, reloaded.getCharacter().getEnergy().getCurrentEnergy());
-        assertEquals(50, reloaded.getCharacter().getLevel().getCurrentExperience());
+        assertEquals(20, reloaded.getCharacter().getLevel().getCurrentExperience());
         assertEquals(10, reloaded.getCharacter().getGold());
     }
 }

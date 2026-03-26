@@ -1,6 +1,10 @@
 package com.ethan.byztine.controller;
 
 import org.springframework.web.bind.annotation.*;
+
+import com.ethan.byztine.domain.combat.CombatEngine;
+import com.ethan.byztine.domain.event.CombatEvent;
+import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 
@@ -9,9 +13,14 @@ import com.ethan.byztine.domain.user.UserRepository;
 public class DebugApiController {
 
     private final UserRepository userRepository;
+    private final CombatEngine combatEngine;
 
-    public DebugApiController(UserRepository userRepository) {
+    public DebugApiController(
+            UserRepository userRepository,
+            CombatEngine combatEngine) {
+
         this.userRepository = userRepository;
+        this.combatEngine = combatEngine;
     }
 
     @PostMapping("/create-user")
@@ -98,7 +107,7 @@ public class DebugApiController {
         userRepository.save(user);
 
         return "Gained " + amount + " XP. Current level: "
-                + character.getLevel().getCurrentLevel();
+                + character.getCurrentLevel();
 
     }
 
@@ -151,33 +160,133 @@ public class DebugApiController {
         return "Added " + amount + " gold";
     }
 
+    @PostMapping("/add-strength")
+    public String addStrength(@RequestParam String email,
+            @RequestParam int amount) {
+
+        var user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null)
+            return "User not found";
+        if (user.getCharacter() == null)
+            return "No character";
+
+        var c = user.getCharacter();
+
+        c.getStats().increaseStrength(amount);
+
+        userRepository.save(user);
+
+        return "Added " + amount + " STR";
+    }
+
+    @PostMapping("/add-intelligence")
+    public String addIntelligence(@RequestParam String email,
+            @RequestParam int amount) {
+
+        var user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null)
+            return "User not found";
+        if (user.getCharacter() == null)
+            return "No character";
+
+        var c = user.getCharacter();
+
+        c.getStats().increaseIntelligence(amount);
+
+        userRepository.save(user);
+
+        return "Added " + amount + " INT";
+    }
+
+    @PostMapping("/add-agility")
+    public String addAgility(@RequestParam String email,
+            @RequestParam int amount) {
+
+        var user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null)
+            return "User not found";
+        if (user.getCharacter() == null)
+            return "No character";
+
+        var c = user.getCharacter();
+
+        c.getStats().increaseAgility(amount);
+
+        userRepository.save(user);
+
+        return "Added " + amount + " AGI";
+    }
+
     @PostMapping("/train")
-    public String train(@RequestParam String email) {
+    public String train(@RequestParam String email,
+            @RequestParam String stat) {
 
         var optionalUser = userRepository.findByEmail(email);
 
-        if (optionalUser.isEmpty()) {
+        if (optionalUser.isEmpty())
             return "User not found";
-        }
 
-        User user = optionalUser.get();
+        var user = optionalUser.get();
 
-        if (user.getCharacter() == null) {
+        if (user.getCharacter() == null)
             return "User has no character";
-        }
 
         var character = user.getCharacter();
 
         try {
             var result = character.executeEvent(
-                    new com.ethan.byztine.domain.event.TrainingEvent());
+                    new TrainingEvent(stat));
 
             userRepository.save(user);
 
-            return "🏋️ Training | XP: +" + result.getExperienceGained()
-                    + " | Gold: +" + result.getGoldGained()
-                    + " | Level: " + result.getLevelBefore()
-                    + " → " + result.getLevelAfter();
+            return "🏋️ Training (" + stat.toUpperCase() + ")\n" + result.toString();
+
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    @PostMapping("/combat")
+    public String combat(
+            @RequestParam String attackerEmail,
+            @RequestParam String defenderEmail) {
+
+        var attackerOpt = userRepository.findByEmail(attackerEmail);
+        var defenderOpt = userRepository.findByEmail(defenderEmail);
+
+        if (attackerOpt.isEmpty())
+            return "Attacker not found";
+
+        if (defenderOpt.isEmpty())
+            return "Defender not found";
+
+        var attackerUser = attackerOpt.get();
+        var defenderUser = defenderOpt.get();
+
+        if (attackerUser.getCharacter() == null)
+            return "Attacker has no character";
+
+        if (defenderUser.getCharacter() == null)
+            return "Defender has no character";
+
+        var attacker = attackerUser.getCharacter();
+        var defender = defenderUser.getCharacter();
+
+        try {
+            var event = new CombatEvent(combatEngine, defender);
+
+            var result = attacker.executeEvent(event);
+
+            userRepository.save(attackerUser);
+
+            boolean win = result.getGoldGained() > 0;
+            return "⚔️ Combat\n\n" +
+                    attacker.getName() + " vs " + defender.getName() + "\n\n" +
+                    (win ? "🏆 Victory\n\n" : "💀 Defeat\n\n") +
+                    result.toString();
 
         } catch (Exception e) {
             return "Error: " + e.getMessage();
@@ -219,6 +328,10 @@ public class DebugApiController {
                 "\nLevel: " + c.getCurrentLevel() +
                 "\nXP: " + c.getCurrentExperience() +
                 "\nEnergy: " + c.getEnergy().getCurrentEnergy() + " / " + c.getEnergy().getMaxEnergy() +
-                "\nGold: " + c.getGold();
+                "\nGold: " + c.getGold() +
+                "\nSTR: " + c.getStats().getStrength() +
+                "\nINT: " + c.getStats().getIntelligence() +
+                "\nAGI: " + c.getStats().getAgility();
+
     }
 }

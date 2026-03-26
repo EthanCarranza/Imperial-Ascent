@@ -18,7 +18,7 @@ public class CombatEvent implements GameEvent {
     @Override
     public EventResult execute(Character character) {
 
-        int levelBefore = character.getLevel().getCurrentLevel();
+        int levelBefore = character.getCurrentLevel();
 
         character.getEnergy().consume(ENERGY_COST);
 
@@ -37,7 +37,7 @@ public class CombatEvent implements GameEvent {
             character.addGold(goldGain);
         }
 
-        int levelAfter = character.getLevel().getCurrentLevel();
+        int levelAfter = character.getCurrentLevel();
 
         return new EventResult(
                 ENERGY_COST,

@@ -95,7 +95,7 @@ public class CharacterTest {
         EventResult result = character.executeEvent(event);
 
         assertEquals(1, result.getEnergySpent());
-        assertEquals(50, result.getExperienceGained());
+        assertEquals(20, result.getExperienceGained());
         assertEquals(1, result.getLevelBefore());
         assertEquals(1, result.getLevelAfter());
         assertEquals(10, result.getGoldGained());
