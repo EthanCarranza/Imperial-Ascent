@@ -1,3 +1,15 @@
 spring:
   application:
     name: Byzantine Simulation Engine
+  main:
+    log-startup-info: false
+  jpa:
+    open-in-view: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO

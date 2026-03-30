@@ -1,14 +1,13 @@
 package com.ethan.byztine.infrastructure;
 
-import org.springframework.stereotype.Repository;
-import org.springframework.context.annotation.Profile;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
-@Profile("test")
-@Repository
 public class InMemoryUserRepository implements UserRepository {
 
     private final Map<UUID, User> storage = new HashMap<>();

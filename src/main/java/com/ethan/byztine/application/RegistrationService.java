@@ -11,23 +11,22 @@ import com.ethan.byztine.domain.user.UserRepository;
 @Transactional
 public class RegistrationService {
 
+    private final UserService userService;
     private final UserRepository userRepository;
 
-    public RegistrationService(UserRepository userRepository) {
+    public RegistrationService(UserService userService,
+            UserRepository userRepository) {
+        this.userService = userService;
         this.userRepository = userRepository;
     }
 
     public User registerUserWithCharacter(
             String username,
             String email,
-            String passwordHash,
+            String rawPassword,
             String characterName) {
 
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalStateException("Email already registered");
-        }
-
-        User user = new User(username, email, passwordHash);
+        User user = userService.register(username, email, rawPassword);
         Character character = new Character(characterName);
 
         user.assignCharacter(character);

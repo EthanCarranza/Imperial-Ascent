@@ -18,9 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserPersistenceTest {
 
     @Autowired
-    private JpaUserRepository repository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Test
@@ -31,12 +28,13 @@ class UserPersistenceTest {
                 "marcus@test.com",
                 "hashed-password");
 
-        repository.save(user);
+        userRepository.save(user);
 
-        Optional<User> found = repository.findByEmail("marcus@test.com");
+        Optional<User> found = userRepository.findByEmail("marcus@test.com");
 
         assertTrue(found.isPresent());
         assertEquals("Marcus", found.get().getUsername());
+        assertNotNull(found.get().getId());
     }
 
     @Test

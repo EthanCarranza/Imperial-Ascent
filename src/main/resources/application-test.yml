@@ -9,3 +9,9 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+
+logging:
+  level:
+    root: WARN
+    org.springframework: WARN
+    org.hibernate: WARN

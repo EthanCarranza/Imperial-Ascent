@@ -1,104 +1,76 @@
 package com.ethan.byztine.config;
 
+import com.ethan.byztine.application.RegistrationService;
+import com.ethan.byztine.domain.Character;
+import com.ethan.byztine.domain.user.User;
+import com.ethan.byztine.domain.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import com.ethan.byztine.domain.Character;
-import com.ethan.byztine.domain.user.User;
-import com.ethan.byztine.domain.user.UserRepository;
-
 @Configuration
 @Profile("dev")
 public class DataSeeder {
 
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
+
     @Bean
-    CommandLineRunner seedDatabase(UserRepository userRepository) {
+    CommandLineRunner seedDatabase(RegistrationService registrationService,
+            UserRepository userRepository) {
         return args -> {
 
-            // ⚠️ Evita duplicar si ya existe seed
             if (userRepository.findByEmail("warrior@test.com").isPresent()) {
-                System.out.println("🌱 Seed already exists");
+                log.info("Seed already exists");
                 return;
             }
 
-            // =========================
-            // 🛡️ WARRIOR (STR alto)
-            // =========================
-            User warrior = new User("Warrior", "warrior@test.com", "1234");
-            Character warriorChar = new Character("Thorgar");
+            seedUser(registrationService, userRepository,
+                    "Warrior", "warrior@test.com", "1234", "Thorgar",
+                    5, 2, 1, 100);
+            seedUser(registrationService, userRepository,
+                    "Mage", "mage@test.com", "1234", "Eldrin",
+                    1, 2, 6, 50);
+            seedUser(registrationService, userRepository,
+                    "Rogue", "rogue@test.com", "1234", "Shade",
+                    2, 6, 1, 75);
+            seedUser(registrationService, userRepository,
+                    "Balanced", "balanced@test.com", "1234", "Aurelian",
+                    3, 3, 3, 60);
+            seedUser(registrationService, userRepository,
+                    "Dummy", "dummy@test.com", "1234", "Training Dummy",
+                    1, 1, 1, 10);
 
-            warriorChar.getStats().increaseStrength(5);
-            warriorChar.getStats().increaseAgility(2);
-            warriorChar.getStats().increaseIntelligence(1);
-
-            warriorChar.addGold(100);
-
-            warrior.assignCharacter(warriorChar);
-            userRepository.save(warrior);
-
-            // =========================
-            // 🧠 MAGE (INT alto)
-            // =========================
-            User mage = new User("Mage", "mage@test.com", "1234");
-            Character mageChar = new Character("Eldrin");
-
-            mageChar.getStats().increaseStrength(1);
-            mageChar.getStats().increaseAgility(2);
-            mageChar.getStats().increaseIntelligence(6);
-
-            mageChar.addGold(50);
-
-            mage.assignCharacter(mageChar);
-            userRepository.save(mage);
-
-            // =========================
-            // ⚡ ROGUE (AGI alto)
-            // =========================
-            User rogue = new User("Rogue", "rogue@test.com", "1234");
-            Character rogueChar = new Character("Shade");
-
-            rogueChar.getStats().increaseStrength(2);
-            rogueChar.getStats().increaseAgility(6);
-            rogueChar.getStats().increaseIntelligence(1);
-
-            rogueChar.addGold(75);
-
-            rogue.assignCharacter(rogueChar);
-            userRepository.save(rogue);
-
-            // =========================
-            // ⚖️ BALANCED
-            // =========================
-            User balanced = new User("Balanced", "balanced@test.com", "1234");
-            Character balancedChar = new Character("Aurelian");
-
-            balancedChar.getStats().increaseStrength(3);
-            balancedChar.getStats().increaseAgility(3);
-            balancedChar.getStats().increaseIntelligence(3);
-
-            balancedChar.addGold(60);
-
-            balanced.assignCharacter(balancedChar);
-            userRepository.save(balanced);
-
-            // =========================
-            // 🧪 TEST DUMMY (débil)
-            // =========================
-            User dummy = new User("Dummy", "dummy@test.com", "1234");
-            Character dummyChar = new Character("Training Dummy");
-
-            dummyChar.getStats().increaseStrength(1);
-            dummyChar.getStats().increaseAgility(1);
-            dummyChar.getStats().increaseIntelligence(1);
-
-            dummyChar.addGold(10);
-
-            dummy.assignCharacter(dummyChar);
-            userRepository.save(dummy);
-
-            System.out.println("🌱 Database seeded with test characters");
+            log.info("Database seeded with test characters");
         };
+    }
+
+    private void seedUser(RegistrationService registrationService,
+            UserRepository userRepository,
+            String username,
+            String email,
+            String rawPassword,
+            String characterName,
+            int strengthBonus,
+            int agilityBonus,
+            int intelligenceBonus,
+            int initialGold) {
+
+        User user = registrationService.registerUserWithCharacter(
+                username,
+                email,
+                rawPassword,
+                characterName);
+
+        Character character = user.getCharacter();
+
+        character.getStats().increaseStrength(strengthBonus);
+        character.getStats().increaseAgility(agilityBonus);
+        character.getStats().increaseIntelligence(intelligenceBonus);
+        character.addGold(initialGold);
+
+        userRepository.save(user);
     }
 }

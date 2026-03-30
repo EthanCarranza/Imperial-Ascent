@@ -1,25 +1,42 @@
 package com.ethan.byztine.controller;
 
-import org.springframework.web.bind.annotation.*;
-
+import com.ethan.byztine.application.ExecuteEventService;
+import com.ethan.byztine.application.UserService;
+import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.combat.CombatEngine;
 import com.ethan.byztine.domain.event.CombatEvent;
+import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/api/debug")
 public class DebugApiController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final ExecuteEventService executeEventService;
     private final CombatEngine combatEngine;
 
     public DebugApiController(
             UserRepository userRepository,
+            UserService userService,
+            ExecuteEventService executeEventService,
             CombatEngine combatEngine) {
 
         this.userRepository = userRepository;
+        this.userService = userService;
+        this.executeEventService = executeEventService;
         this.combatEngine = combatEngine;
     }
 
@@ -29,224 +46,123 @@ public class DebugApiController {
             @RequestParam String email,
             @RequestParam String password) {
 
-        if (username == null || username.isBlank()) {
-            return "Username cannot be empty";
-        }
-
-        if (email == null || email.isBlank()) {
-            return "Email cannot be empty";
-        }
-
-        if (password == null || password.isBlank()) {
-            return "Password cannot be empty";
-        }
-
-        var existingUser = userRepository.findByEmail(email);
-
-        if (existingUser.isPresent()) {
-            return "User already exists with email: " + email;
-        }
-
-        // ⚠️ DEBUG: sin encriptar (esto ya lo sabes)
-        String passwordHash = password;
-
-        User user = new User(username, email, passwordHash);
-        userRepository.save(user);
-
-        return "User created: " + username + " (" + email + ")";
+        return handleRequest(() -> {
+            userService.register(username, email, password);
+            return "User created: " + username + " (" + email + ")";
+        });
     }
 
     @PostMapping("/create-character")
     public String createCharacter(@RequestParam String email,
             @RequestParam String name) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
-        }
+            if (user.getCharacter() != null) {
+                throw new IllegalStateException("User already has a character");
+            }
 
-        User user = optionalUser.get();
+            user.assignCharacter(new Character(name));
+            userRepository.save(user);
 
-        if (user.getCharacter() != null) {
-            return "User already has a character";
-        }
-
-        var character = new com.ethan.byztine.domain.Character(name);
-
-        user.assignCharacter(character);
-        userRepository.save(user);
-
-        return "Character created: " + name;
+            return "Character created: " + name;
+        });
     }
 
     @PostMapping("/gain-xp")
     public String gainXp(@RequestParam String email,
             @RequestParam int amount) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            requirePositiveAmount(amount);
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
-        }
-
-        User user = optionalUser.get();
-
-        if (user.getCharacter() == null) {
-            return "User has no character";
-        }
-
-        var character = user.getCharacter();
-
-        try {
             character.gainExperience(amount);
-        } catch (Exception e) {
-            return "Error gaining XP: " + e.getMessage();
-        }
+            userRepository.save(user);
 
-        userRepository.save(user);
-
-        return "Gained " + amount + " XP. Current level: "
-                + character.getCurrentLevel();
-
+            return "Gained " + amount + " XP. Current level: "
+                    + character.getCurrentLevel();
+        });
     }
 
     @PostMapping("/restore-energy")
     public String restoreEnergy(@RequestParam String email) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
-        }
+            character.getEnergy().regenerate(character.getEnergy().getMaxEnergy());
+            userRepository.save(user);
 
-        var user = optionalUser.get();
-
-        if (user.getCharacter() == null) {
-            return "User has no character";
-        }
-
-        var character = user.getCharacter();
-
-        character.getEnergy().regenerate(character.getEnergy().getMaxEnergy());
-
-        userRepository.save(user);
-
-        return "Energy fully restored";
+            return "Energy fully restored";
+        });
     }
 
     @PostMapping("/add-gold")
     public String addGold(@RequestParam String email,
             @RequestParam int amount) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            requirePositiveAmount(amount);
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
-        }
+            character.addGold(amount);
+            userRepository.save(user);
 
-        var user = optionalUser.get();
-
-        if (user.getCharacter() == null) {
-            return "User has no character";
-        }
-
-        var character = user.getCharacter();
-
-        character.addGold(amount);
-
-        userRepository.save(user);
-
-        return "Added " + amount + " gold";
+            return "Added " + amount + " gold";
+        });
     }
 
     @PostMapping("/add-strength")
     public String addStrength(@RequestParam String email,
             @RequestParam int amount) {
 
-        var user = userRepository.findByEmail(email).orElse(null);
-
-        if (user == null)
-            return "User not found";
-        if (user.getCharacter() == null)
-            return "No character";
-
-        var c = user.getCharacter();
-
-        c.getStats().increaseStrength(amount);
-
-        userRepository.save(user);
-
-        return "Added " + amount + " STR";
+        return updateStat(email, amount, "STR",
+                character -> character.getStats().increaseStrength(amount));
     }
 
     @PostMapping("/add-intelligence")
     public String addIntelligence(@RequestParam String email,
             @RequestParam int amount) {
 
-        var user = userRepository.findByEmail(email).orElse(null);
-
-        if (user == null)
-            return "User not found";
-        if (user.getCharacter() == null)
-            return "No character";
-
-        var c = user.getCharacter();
-
-        c.getStats().increaseIntelligence(amount);
-
-        userRepository.save(user);
-
-        return "Added " + amount + " INT";
+        return updateStat(email, amount, "INT",
+                character -> character.getStats().increaseIntelligence(amount));
     }
 
     @PostMapping("/add-agility")
     public String addAgility(@RequestParam String email,
             @RequestParam int amount) {
 
-        var user = userRepository.findByEmail(email).orElse(null);
+        return updateStat(email, amount, "AGI",
+                character -> character.getStats().increaseAgility(amount));
+    }
 
-        if (user == null)
-            return "User not found";
-        if (user.getCharacter() == null)
-            return "No character";
+    @PostMapping("/add-luck")
+    public String addLuck(@RequestParam String email,
+            @RequestParam int amount) {
 
-        var c = user.getCharacter();
-
-        c.getStats().increaseAgility(amount);
-
-        userRepository.save(user);
-
-        return "Added " + amount + " AGI";
+        return updateStat(email, amount, "LUCK",
+                character -> character.getStats().increaseLuck(amount));
     }
 
     @PostMapping("/train")
     public String train(@RequestParam String email,
             @RequestParam String stat) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            requireCharacter(user, "User");
 
-        if (optionalUser.isEmpty())
-            return "User not found";
-
-        var user = optionalUser.get();
-
-        if (user.getCharacter() == null)
-            return "User has no character";
-
-        var character = user.getCharacter();
-
-        try {
-            var result = character.executeEvent(
+            EventResult result = executeEventService.executeEvent(
+                    user.getId(),
                     new TrainingEvent(stat));
 
-            userRepository.save(user);
-
-            return "🏋️ Training (" + stat.toUpperCase() + ")\n" + result.toString();
-
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
-        }
+            return "Training (" + formatStat(stat) + ")\n" + result;
+        });
     }
 
     @PostMapping("/combat")
@@ -254,84 +170,105 @@ public class DebugApiController {
             @RequestParam String attackerEmail,
             @RequestParam String defenderEmail) {
 
-        var attackerOpt = userRepository.findByEmail(attackerEmail);
-        var defenderOpt = userRepository.findByEmail(defenderEmail);
+        return handleRequest(() -> {
+            User attackerUser = requireUserByEmail(attackerEmail, "Attacker");
+            User defenderUser = requireUserByEmail(defenderEmail, "Defender");
+            Character attacker = requireCharacter(attackerUser, "Attacker");
+            Character defender = requireCharacter(defenderUser, "Defender");
 
-        if (attackerOpt.isEmpty())
-            return "Attacker not found";
-
-        if (defenderOpt.isEmpty())
-            return "Defender not found";
-
-        var attackerUser = attackerOpt.get();
-        var defenderUser = defenderOpt.get();
-
-        if (attackerUser.getCharacter() == null)
-            return "Attacker has no character";
-
-        if (defenderUser.getCharacter() == null)
-            return "Defender has no character";
-
-        var attacker = attackerUser.getCharacter();
-        var defender = defenderUser.getCharacter();
-
-        try {
-            var event = new CombatEvent(combatEngine, defender);
-
-            var result = attacker.executeEvent(event);
-
-            userRepository.save(attackerUser);
+            EventResult result = executeEventService.executeEvent(
+                    attackerUser.getId(),
+                    new CombatEvent(combatEngine, defender));
 
             boolean win = result.getGoldGained() > 0;
-            return "⚔️ Combat\n\n" +
+            return "Combat\n\n" +
                     attacker.getName() + " vs " + defender.getName() + "\n\n" +
-                    (win ? "🏆 Victory\n\n" : "💀 Defeat\n\n") +
-                    result.toString();
-
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
-        }
+                    (win ? "Victory\n\n" : "Defeat\n\n") +
+                    result;
+        });
     }
 
     @GetMapping("/user")
     public String getUser(@RequestParam String email) {
 
-        var optionalUser = userRepository.findByEmail(email);
-
-        if (optionalUser.isEmpty()) {
-            return "User not found";
-        }
-
-        User user = optionalUser.get();
-
-        return "Found user: " + user.getUsername() + " (" + user.getEmail() + ")";
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            return "Found user: " + user.getUsername() + " (" + user.getEmail() + ")";
+        });
     }
 
     @GetMapping("/character")
     public String getCharacter(@RequestParam String email) {
 
-        var optionalUser = userRepository.findByEmail(email);
+        return handleRequest(() -> {
+            Character character = requireCharacter(
+                    requireUserByEmail(email, "User"),
+                    "User");
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
+            return character.getName() +
+                    "\nLevel: " + character.getCurrentLevel() +
+                    "\nXP: " + character.getCurrentExperience() +
+                    "\nEnergy: " + character.getEnergy().getCurrentEnergy() + " / "
+                    + character.getEnergy().getMaxEnergy() +
+                    "\nGold: " + character.getGold() +
+                    "\nSTR: " + character.getStats().getStrength() +
+                    "\nINT: " + character.getStats().getIntelligence() +
+                    "\nAGI: " + character.getStats().getAgility() +
+                    "\nLUCK: " + character.getStats().getLuck();
+        });
+    }
+
+    private String updateStat(String email,
+            int amount,
+            String label,
+            Consumer<Character> updateAction) {
+
+        return handleRequest(() -> {
+            requirePositiveAmount(amount);
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+
+            updateAction.accept(character);
+            userRepository.save(user);
+
+            return "Added " + amount + " " + label;
+        });
+    }
+
+    private User requireUserByEmail(String email, String subject) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException(subject + " not found"));
+    }
+
+    private Character requireCharacter(User user, String subject) {
+        Character character = user.getCharacter();
+
+        if (character == null) {
+            throw new IllegalStateException(subject + " has no character");
         }
 
-        User user = optionalUser.get();
+        return character;
+    }
 
-        if (user.getCharacter() == null) {
-            return "User has no character";
+    private void requirePositiveAmount(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+    }
+
+    private String handleRequest(Supplier<String> action) {
+        try {
+            return action.get();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return e.getMessage();
+        }
+    }
+
+    private String formatStat(String stat) {
+        if (stat == null) {
+            return "";
         }
 
-        var c = user.getCharacter();
-
-        return "👤 " + c.getName() +
-                "\nLevel: " + c.getCurrentLevel() +
-                "\nXP: " + c.getCurrentExperience() +
-                "\nEnergy: " + c.getEnergy().getCurrentEnergy() + " / " + c.getEnergy().getMaxEnergy() +
-                "\nGold: " + c.getGold() +
-                "\nSTR: " + c.getStats().getStrength() +
-                "\nINT: " + c.getStats().getIntelligence() +
-                "\nAGI: " + c.getStats().getAgility();
-
+        return stat.trim().toUpperCase(Locale.ROOT);
     }
 }

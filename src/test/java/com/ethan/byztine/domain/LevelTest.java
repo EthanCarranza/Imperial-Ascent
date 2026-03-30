@@ -53,4 +53,16 @@ class LevelTest {
         assertEquals(3, level.getCurrentLevel());
         assertEquals(50, level.getCurrentExperience());
     }
+
+    @Test
+    void addingNonPositiveExperienceShouldFail() {
+        Level level = new Level();
+
+        assertEquals("Experience must be positive",
+                assertThrows(IllegalArgumentException.class,
+                        () -> level.addExperience(0)).getMessage());
+        assertEquals("Experience must be positive",
+                assertThrows(IllegalArgumentException.class,
+                        () -> level.addExperience(-1)).getMessage());
+    }
 }

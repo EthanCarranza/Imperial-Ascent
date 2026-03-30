@@ -102,6 +102,24 @@ public class CharacterTest {
     }
 
     @Test
+    void invalidTrainingStatShouldNotMutateCharacter() {
+
+        Character character = new Character("Marcus");
+        GameEvent event = new TrainingEvent("invalid");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> character.executeEvent(event));
+
+        assertEquals(10, character.getEnergy().getCurrentEnergy());
+        assertEquals(0, character.getCurrentExperience());
+        assertEquals(0, character.getGold());
+        assertEquals(5, character.getStats().getStrength());
+        assertEquals(5, character.getStats().getIntelligence());
+        assertEquals(5, character.getStats().getAgility());
+        assertEquals(5, character.getStats().getLuck());
+    }
+
+    @Test
     void spendingGoldShouldReduceBalance() {
 
         Character character = new Character("Marcus");
@@ -121,5 +139,19 @@ public class CharacterTest {
 
         assertThrows(IllegalStateException.class,
                 () -> character.spendGold(10));
+    }
+
+    @Test
+    void addingNonPositiveGoldShouldFail() {
+
+        Character character = new Character("Marcus");
+
+        assertEquals("Gold amount must be positive",
+                assertThrows(IllegalArgumentException.class,
+                        () -> character.addGold(0)).getMessage());
+        assertEquals("Gold amount must be positive",
+                assertThrows(IllegalArgumentException.class,
+                        () -> character.addGold(-1)).getMessage());
+        assertEquals(0, character.getGold());
     }
 }

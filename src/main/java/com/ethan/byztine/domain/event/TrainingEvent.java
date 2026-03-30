@@ -1,17 +1,20 @@
 package com.ethan.byztine.domain.event;
 
 import com.ethan.byztine.domain.Character;
+import com.ethan.byztine.domain.StatScaling;
+
+import java.util.Locale;
 
 public class TrainingEvent implements GameEvent {
 
     private static final int ENERGY_COST = 1;
-    private static final int BASE_XP = 10;
-    private static final int INT_MULTIPLIER = 2;
+    private static final int BASE_XP = 20;
     private static final int GOLD_REWARD = 10;
+    private static final int BASE_INTELLIGENCE = 5;
+    private static final double XP_BONUS_PER_INTELLIGENCE = 1.75;
 
     private final String stat;
 
-    // Constructor por defecto para tests
     public TrainingEvent() {
         this.stat = "str";
     }
@@ -23,18 +26,16 @@ public class TrainingEvent implements GameEvent {
     @Override
     public EventResult execute(Character character) {
 
-        int levelBefore = character.getCurrentLevel();
+        String normalizedStat = normalizeStat(stat);
 
-        character.getEnergy().consume(ENERGY_COST);
+        int xpReward = calculateExperienceReward(character);
 
-        int intelligence = character.getStats().getIntelligence();
-        int xpReward = BASE_XP + (intelligence * INT_MULTIPLIER);
+        EventResult result = character.applyTraining(
+                ENERGY_COST,
+                xpReward,
+                GOLD_REWARD);
 
-        character.gainExperience(xpReward);
-        character.addGold(GOLD_REWARD);
-
-        // subir stat elegida
-        switch (stat == null ? "" : stat.toLowerCase()) {
+        switch (normalizedStat) {
             case "str":
                 character.getStats().increaseStrength(1);
                 break;
@@ -44,17 +45,38 @@ public class TrainingEvent implements GameEvent {
             case "agi":
                 character.getStats().increaseAgility(1);
                 break;
+            case "luck":
+                character.getStats().increaseLuck(1);
+                break;
             default:
-                throw new IllegalArgumentException("Invalid stat");
+                throw new IllegalStateException("Unsupported stat: " + normalizedStat);
         }
 
-        int levelAfter = character.getCurrentLevel();
+        return result;
+    }
 
-        return new EventResult(
-                ENERGY_COST,
-                xpReward,
-                levelBefore,
-                levelAfter,
-                GOLD_REWARD);
+    private int calculateExperienceReward(Character character) {
+        int intelligence = character.getStats().getIntelligence();
+        double effectiveIntelligenceBonus = StatScaling.positiveSoftBonus(
+                intelligence,
+                BASE_INTELLIGENCE);
+        int intelligenceBonus = (int) Math.round(effectiveIntelligenceBonus * XP_BONUS_PER_INTELLIGENCE);
+
+        return BASE_XP + intelligenceBonus;
+    }
+
+    private String normalizeStat(String requestedStat) {
+
+        if (requestedStat == null) {
+            throw new IllegalArgumentException("Invalid stat");
+        }
+
+        String normalizedStat = requestedStat.trim().toLowerCase(Locale.ROOT);
+
+        return switch (normalizedStat) {
+            case "str", "int", "agi" -> normalizedStat;
+            case "luck", "luk" -> "luck";
+            default -> throw new IllegalArgumentException("Invalid stat");
+        };
     }
 }

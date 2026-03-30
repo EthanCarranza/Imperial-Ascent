@@ -52,6 +52,10 @@
         padding: 15px;
         border-radius: 5px;
       }
+
+      .log-entry {
+        white-space: pre-wrap;
+      }
     </style>
   </head>
 
@@ -64,7 +68,7 @@
       <form onsubmit="submitForm(event, '/api/debug/create-user')">
         <input name="username" placeholder="Username" />
         <input name="email" placeholder="Email" />
-        <input name="password" placeholder="Password" />
+        <input name="password" type="password" placeholder="Password" />
         <button type="submit">Create</button>
       </form>
 
@@ -90,18 +94,18 @@
       <h2>Gain XP</h2>
       <form onsubmit="submitForm(event, '/api/debug/gain-xp')">
         <input name="email" placeholder="Email" />
-        <input name="amount" type="number" placeholder="XP amount" />
+        <input name="amount" type="number" min="1" placeholder="XP amount" />
         <button type="submit">Gain</button>
       </form>
 
       <h2>Train</h2>
-
       <form onsubmit="submitForm(event, '/api/debug/train')">
         <input name="email" placeholder="Email" />
         <select name="stat">
           <option value="str">Strength</option>
           <option value="int">Intelligence</option>
           <option value="agi">Agility</option>
+          <option value="luck">Luck</option>
         </select>
 
         <button type="submit">Train</button>
@@ -116,36 +120,40 @@
       <h2>Add Gold</h2>
       <form onsubmit="submitForm(event, '/api/debug/add-gold')">
         <input name="email" placeholder="Email" />
-        <input name="amount" type="number" placeholder="Gold" />
+        <input name="amount" type="number" min="1" placeholder="Gold" />
         <button type="submit">Add</button>
       </form>
       <hr />
 
       <h2>Add Strength</h2>
-
       <form onsubmit="submitForm(event, '/api/debug/add-strength')">
         <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" placeholder="Amount" />
+        <input name="amount" type="number" min="1" placeholder="Amount" />
         <button type="submit">Add STR</button>
       </form>
 
       <h2>Add Intelligence</h2>
-
       <form onsubmit="submitForm(event, '/api/debug/add-intelligence')">
         <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" placeholder="Amount" />
+        <input name="amount" type="number" min="1" placeholder="Amount" />
         <button type="submit">Add INT</button>
       </form>
 
       <h2>Add Agility</h2>
-
       <form onsubmit="submitForm(event, '/api/debug/add-agility')">
         <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" placeholder="Amount" />
+        <input name="amount" type="number" min="1" placeholder="Amount" />
         <button type="submit">Add AGI</button>
       </form>
-      <h2>Combat</h2>
 
+      <h2>Add Luck</h2>
+      <form onsubmit="submitForm(event, '/api/debug/add-luck')">
+        <input name="email" placeholder="User Email" />
+        <input name="amount" type="number" min="1" placeholder="Amount" />
+        <button type="submit">Add LUCK</button>
+      </form>
+
+      <h2>Combat</h2>
       <form onsubmit="submitForm(event, '/api/debug/combat')">
         <input name="attackerEmail" placeholder="Attacker email" />
         <input name="defenderEmail" placeholder="Defender email" />
@@ -156,10 +164,29 @@
     <!-- RIGHT: output -->
     <div class="right">
       <h2>Output</h2>
-      <div id="output">Aquí aparecerán los resultados...</div>
+      <div id="output" data-empty="true">Aqui apareceran los resultados...</div>
     </div>
 
     <script>
+      function appendOutput(text) {
+        const output = document.getElementById("output");
+
+        if (output.dataset.empty === "true") {
+          output.replaceChildren();
+          output.dataset.empty = "false";
+        }
+
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+        entry.textContent = text;
+
+        if (output.firstChild) {
+          output.prepend(document.createElement("hr"));
+        }
+
+        output.prepend(entry);
+      }
+
       async function submitForm(event, url, method = "POST") {
         event.preventDefault();
 
@@ -179,13 +206,9 @@
             });
           }
 
-          const text = await response.text();
-          document.getElementById("output").innerHTML =
-            text.replace(/\n/g, "<br>") +
-            "<hr>" +
-            document.getElementById("output").innerHTML;
+          appendOutput(await response.text());
         } catch (err) {
-          document.getElementById("output").innerText = "Error: " + err;
+          appendOutput("Error: " + err);
         }
       }
     </script>

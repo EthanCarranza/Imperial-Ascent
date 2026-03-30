@@ -1,22 +1,19 @@
 package com.ethan.byztine.infrastructure.persistence;
 
-import org.springframework.stereotype.Repository;
-
-import org.springframework.context.annotation.Profile;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-@Profile("!test")
 @Repository
 public class JpaUserRepositoryAdapter implements UserRepository {
 
-    private final SpringDataUserRepository repository;
+    private final UserJpaRepository repository;
 
-    public JpaUserRepositoryAdapter(SpringDataUserRepository repository) {
+    public JpaUserRepositoryAdapter(UserJpaRepository repository) {
         this.repository = repository;
     }
 

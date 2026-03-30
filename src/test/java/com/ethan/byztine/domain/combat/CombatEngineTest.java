@@ -12,7 +12,7 @@ class CombatEngineTest {
         Combatant attacker = new Combatant(10, 2, 20);
         Combatant defender = new Combatant(5, 1, 20);
 
-        DamageCalculator calculator = new DefaultDamageCalculator(new FixedRandomProvider());
+        DamageCalculator calculator = new DefaultDamageCalculator(bound -> 2);
 
         CombatEngine engine = new CombatEngine(calculator);
 

@@ -33,6 +33,7 @@ public class ExecuteEventService {
         }
 
         EventResult result = character.executeEvent(event);
+        userRepository.save(user);
 
         return result;
     }

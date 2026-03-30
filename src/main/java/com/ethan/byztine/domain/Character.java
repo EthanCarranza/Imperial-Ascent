@@ -42,7 +42,7 @@ public class Character {
         this.level = new Level();
         this.energy = new Energy(calculateMaxEnergy());
         this.gold = 0;
-        this.stats = new Stats(5, 5, 5); // base
+        this.stats = new Stats(5, 5, 5, 5);
     }
 
     private int calculateMaxEnergy() {
@@ -94,7 +94,7 @@ public class Character {
     }
 
     public void addGold(int amount) {
-        if (amount < 0) {
+        if (amount <= 0) {
             throw new IllegalArgumentException("Gold amount must be positive");
         }
         this.gold += amount;
