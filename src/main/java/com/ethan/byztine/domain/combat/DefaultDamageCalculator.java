@@ -7,16 +7,16 @@ import org.springframework.stereotype.Component;
 public class DefaultDamageCalculator implements DamageCalculator {
 
     private static final int BASE_HIT_CHANCE = 75;
-    private static final double HIT_CHANCE_SWING = 20.0;
+    private static final double HIT_CHANCE_SWING = 8.0;
     private static final double HIT_CHANCE_CURVE_DIVISOR = 3.5;
     private static final int BASE_STRENGTH = 5;
-    private static final double DAMAGE_MULTIPLIER_PER_STRENGTH_POINT = 0.12;
+    private static final double DAMAGE_MULTIPLIER_PER_STRENGTH_POINT = 0.08;
     private static final int BASE_CRIT_CHANCE = 3;
     private static final double POSITIVE_CRIT_CHANCE_SWING = 7.0;
     private static final double NEGATIVE_CRIT_CHANCE_SWING = 2.0;
     private static final double CRIT_CHANCE_CURVE_DIVISOR = 3.5;
     private static final double CRIT_DAMAGE_MULTIPLIER = 1.5;
-    private static final double MAX_LUCK_SWING_CHANCE = 30.0;
+    private static final double MAX_LUCK_SWING_CHANCE = 24.0;
     private static final double LUCK_SWING_CURVE_DIVISOR = 3.5;
     private static final int MIN_DAMAGE_VARIATION = -2;
     private static final int MAX_DAMAGE_VARIATION = 2;

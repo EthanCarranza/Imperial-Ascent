@@ -159,6 +159,20 @@
         <input name="defenderEmail" placeholder="Defender email" />
         <button type="submit">Fight</button>
       </form>
+
+      <h2>Combat vs Preset</h2>
+      <form onsubmit="submitForm(event, '/api/debug/combat-preset')">
+        <input name="attackerEmail" placeholder="Attacker email" />
+        <select name="enemyType">
+          <option value="recruit">Recruit - balanced</option>
+          <option value="skirmisher">Skirmisher - mixed mid-tier</option>
+          <option value="brute">Brute - high STR</option>
+          <option value="duelist">Duelist - high AGI</option>
+          <option value="gambler">Gambler - high LUCK</option>
+          <option value="veteran">Veteran - mixed level 3</option>
+        </select>
+        <button type="submit">Fight Preset</button>
+      </form>
     </div>
 
     <!-- RIGHT: output -->

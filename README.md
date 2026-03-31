@@ -193,6 +193,8 @@ Delivered so far:
 - Safer debug output rendering without `innerHTML`.
 - Validation against non-positive stat, XP, and gold mutations where appropriate.
 - Better debug-focused tests with `MockMvc`.
+- Debug combat now exposes a round-by-round report with a 20-round cap and health-based tie-breaker.
+- Debug combat can now target enemy presets such as Recruit, Skirmisher, Brute, Duelist, Gambler, and Veteran for matchup testing.
 
 Still intentionally incomplete inside 0.2:
 

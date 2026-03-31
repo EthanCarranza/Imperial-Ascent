@@ -34,7 +34,7 @@ class CombatIntegrationTest {
         Combatant c1 = new Combatant(5, 5, 1000);
         Combatant c2 = new Combatant(5, 5, 1000);
 
-        DamageCalculator calculator = new DefaultDamageCalculator(new DefaultRandomProvider());
+        DamageCalculator calculator = (attacker, defender) -> 0;
 
         CombatEngine engine = new CombatEngine(calculator);
 

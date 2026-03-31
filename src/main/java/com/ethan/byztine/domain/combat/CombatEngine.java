@@ -1,11 +1,14 @@
 package com.ethan.byztine.domain.combat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class CombatEngine {
 
-    private static final int MAX_ROUNDS = 100;
+    private static final int MAX_ROUNDS = 20;
 
     private final DamageCalculator damageCalculator;
 
@@ -14,27 +17,73 @@ public class CombatEngine {
     }
 
     public CombatResult fight(Combatant attacker, Combatant defender) {
+        return fightDetailed(attacker, defender).getResult();
+    }
+
+    public CombatReport fightDetailed(Combatant attacker, Combatant defender) {
 
         int rounds = 0;
-        boolean attackerTurn = true;
+        List<CombatRoundReport> roundReports = new ArrayList<>();
 
         while (attacker.isAlive() && defender.isAlive() && rounds < MAX_ROUNDS) {
+            rounds++;
 
-            if (attackerTurn) {
-                int damage = damageCalculator.calculate(attacker, defender);
-                defender.receiveDamage(damage);
-            } else {
-                int damage = damageCalculator.calculate(defender, attacker);
-                attacker.receiveDamage(damage);
+            int attackerDamage = damageCalculator.calculate(attacker, defender);
+            defender.receiveDamage(attackerDamage);
+
+            int defenderDamage = 0;
+            boolean defenderActed = false;
+
+            if (defender.isAlive()) {
+                defenderDamage = damageCalculator.calculate(defender, attacker);
+                attacker.receiveDamage(defenderDamage);
+                defenderActed = true;
             }
 
-            attackerTurn = !attackerTurn;
-            rounds++;
+            roundReports.add(new CombatRoundReport(
+                    rounds,
+                    attackerDamage,
+                    defenderDamage,
+                    attacker.getCurrentHealth(),
+                    defender.getCurrentHealth(),
+                    defenderActed));
         }
 
-        boolean attackerWon = attacker.isAlive() && !defender.isAlive();
-        boolean draw = rounds >= MAX_ROUNDS && attacker.isAlive() && defender.isAlive();
+        boolean reachedRoundLimit = rounds >= MAX_ROUNDS && attacker.isAlive() && defender.isAlive();
+        CombatResult result = buildResult(attacker, defender, rounds, reachedRoundLimit);
 
-        return new CombatResult(attackerWon, rounds, draw);
+        return new CombatReport(
+                result,
+                roundReports,
+                attacker.getCurrentHealth(),
+                defender.getCurrentHealth(),
+                reachedRoundLimit);
+    }
+
+    private CombatResult buildResult(
+            Combatant attacker,
+            Combatant defender,
+            int rounds,
+            boolean reachedRoundLimit) {
+
+        if (!attacker.isAlive()) {
+            return new CombatResult(false, rounds, false);
+        }
+
+        if (!defender.isAlive()) {
+            return new CombatResult(true, rounds, false);
+        }
+
+        if (reachedRoundLimit) {
+            if (attacker.getCurrentHealth() > defender.getCurrentHealth()) {
+                return new CombatResult(true, rounds, false);
+            }
+
+            if (defender.getCurrentHealth() > attacker.getCurrentHealth()) {
+                return new CombatResult(false, rounds, false);
+            }
+        }
+
+        return new CombatResult(false, rounds, true);
     }
 }

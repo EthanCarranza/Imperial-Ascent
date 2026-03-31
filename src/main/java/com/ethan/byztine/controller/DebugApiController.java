@@ -3,8 +3,13 @@ package com.ethan.byztine.controller;
 import com.ethan.byztine.application.ExecuteEventService;
 import com.ethan.byztine.application.UserService;
 import com.ethan.byztine.domain.Character;
+import com.ethan.byztine.domain.combat.CombatReport;
+import com.ethan.byztine.domain.combat.CombatRoundReport;
 import com.ethan.byztine.domain.combat.CombatEngine;
+import com.ethan.byztine.domain.combat.EnemyFactory;
+import com.ethan.byztine.domain.combat.EnemyPreset;
 import com.ethan.byztine.domain.event.CombatEvent;
+import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.user.User;
@@ -180,11 +185,25 @@ public class DebugApiController {
                     attackerUser.getId(),
                     new CombatEvent(combatEngine, defender));
 
-            boolean win = result.getGoldGained() > 0;
-            return "Combat\n\n" +
-                    attacker.getName() + " vs " + defender.getName() + "\n\n" +
-                    (win ? "Victory\n\n" : "Defeat\n\n") +
-                    result;
+            return formatCombatResponse(attacker, defender, result);
+        });
+    }
+
+    @PostMapping("/combat-preset")
+    public String combatPreset(
+            @RequestParam String attackerEmail,
+            @RequestParam String enemyType) {
+
+        return handleRequest(() -> {
+            User attackerUser = requireUserByEmail(attackerEmail, "Attacker");
+            Character attacker = requireCharacter(attackerUser, "Attacker");
+            Character enemy = EnemyFactory.create(EnemyPreset.fromId(enemyType));
+
+            EventResult result = executeEventService.executeEvent(
+                    attackerUser.getId(),
+                    new CombatEvent(combatEngine, enemy));
+
+            return formatCombatResponse(attacker, enemy, result);
         });
     }
 
@@ -270,5 +289,127 @@ public class DebugApiController {
         }
 
         return stat.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String formatCombatResponse(
+            Character attacker,
+            Character defender,
+            EventResult result) {
+
+        if (!(result instanceof CombatEventResult combatEventResult)) {
+            return "Combat\n\n" +
+                    attacker.getName() + " vs " + defender.getName() + "\n\n" +
+                    result;
+        }
+
+        CombatReport report = combatEventResult.getCombatReport();
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Combat\n\n")
+                .append(attacker.getName())
+                .append(" vs ")
+                .append(defender.getName())
+                .append("\n")
+                .append("Outcome: ")
+                .append(formatCombatOutcome(attacker, defender, report))
+                .append("\n")
+                .append("Rounds: ")
+                .append(report.getResult().getRounds())
+                .append("\n")
+                .append("Final HP: ")
+                .append(attacker.getName())
+                .append(" ")
+                .append(report.getAttackerFinalHealth())
+                .append(" | ")
+                .append(defender.getName())
+                .append(" ")
+                .append(report.getDefenderFinalHealth());
+
+        for (CombatRoundReport round : report.getRounds()) {
+            builder.append("\n\n")
+                    .append(formatRound(attacker.getName(), defender.getName(), round));
+        }
+
+        builder.append("\n\nSummary\n")
+                .append(result);
+
+        return builder.toString();
+    }
+
+    private String formatCombatOutcome(
+            Character attacker,
+            Character defender,
+            CombatReport report) {
+
+        if (report.getResult().isDraw()) {
+            return report.reachedRoundLimit()
+                    ? "Draw after 20 rounds"
+                    : "Draw";
+        }
+
+        String winner = report.getResult().attackerWon()
+                ? attacker.getName()
+                : defender.getName();
+
+        if (report.reachedRoundLimit()) {
+            return winner + " wins on health after 20 rounds";
+        }
+
+        return winner + " wins by knockout";
+    }
+
+    private String formatRound(
+            String attackerName,
+            String defenderName,
+            CombatRoundReport round) {
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Round ")
+                .append(round.roundNumber())
+                .append("\n- ")
+                .append(formatAttackLine(
+                        attackerName,
+                        defenderName,
+                        round.attackerDamage(),
+                        round.defenderHealthAfterRound()));
+
+        if (!round.defenderActed()) {
+            builder.append("\n- ")
+                    .append(defenderName)
+                    .append(" is defeated before acting.");
+        } else {
+            builder.append("\n- ")
+                    .append(formatAttackLine(
+                            defenderName,
+                            attackerName,
+                            round.defenderDamage(),
+                            round.attackerHealthAfterRound()));
+        }
+
+        builder.append("\n- End of round: ")
+                .append(attackerName)
+                .append(" ")
+                .append(round.attackerHealthAfterRound())
+                .append(" HP | ")
+                .append(defenderName)
+                .append(" ")
+                .append(round.defenderHealthAfterRound())
+                .append(" HP");
+
+        return builder.toString();
+    }
+
+    private String formatAttackLine(
+            String actorName,
+            String targetName,
+            int damage,
+            int targetHealthAfterAttack) {
+
+        if (damage == 0) {
+            return actorName + " misses. " + targetName + " stays at " + targetHealthAfterAttack + " HP.";
+        }
+
+        return actorName + " deals " + damage + " damage to " + targetName
+                + ". " + targetName + " is now at " + targetHealthAfterAttack + " HP.";
     }
 }

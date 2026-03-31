@@ -32,7 +32,8 @@ public class CombatEvent implements GameEvent {
         Combatant player = CombatantFactory.fromCharacter(character);
         Combatant enemy = CombatantFactory.fromCharacter(opponent);
 
-        CombatResult result = engine.fight(player, enemy);
+        CombatReport report = engine.fightDetailed(player, enemy);
+        CombatResult result = report.getResult();
 
         int expGain = 0;
         int goldGain = 0;
@@ -46,12 +47,13 @@ public class CombatEvent implements GameEvent {
 
         int levelAfter = character.getCurrentLevel();
 
-        return new EventResult(
+        return new CombatEventResult(
                 ENERGY_COST,
                 expGain,
                 levelBefore,
                 levelAfter,
-                goldGain);
+                goldGain,
+                report);
     }
 
     private int calculateExperienceReward(Character character) {

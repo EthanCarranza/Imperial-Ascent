@@ -4,7 +4,11 @@ import com.ethan.byztine.application.ExecuteEventService;
 import com.ethan.byztine.application.UserService;
 import com.ethan.byztine.config.SecurityConfig;
 import com.ethan.byztine.domain.Character;
+import com.ethan.byztine.domain.combat.CombatReport;
 import com.ethan.byztine.domain.combat.CombatEngine;
+import com.ethan.byztine.domain.combat.CombatResult;
+import com.ethan.byztine.domain.combat.CombatRoundReport;
+import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
@@ -159,9 +163,82 @@ class DebugWebTest {
                         result.getResponse().getContentAsString().contains("LUCK: 5")));
     }
 
+    @Test
+    void combatEndpointShouldRenderCombatReport() throws Exception {
+        User attacker = createUserWithCharacter("attacker@test.com", "Cassius");
+        User defender = createUserWithCharacter("defender@test.com", "Maximus");
+
+        when(userRepository.findByEmail(attacker.getEmail())).thenReturn(Optional.of(attacker));
+        when(userRepository.findByEmail(defender.getEmail())).thenReturn(Optional.of(defender));
+        when(executeEventService.executeEvent(eq(attacker.getId()), any()))
+                .thenReturn(createCombatEventResult());
+
+        mockMvc.perform(post("/api/debug/combat")
+                .param("attackerEmail", attacker.getEmail())
+                .param("defenderEmail", defender.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String body = result.getResponse().getContentAsString();
+                    assertTrue(body.contains("Cassius vs Maximus"));
+                    assertTrue(body.contains("Round 1"));
+                    assertTrue(body.contains("Cassius deals 4 damage to Maximus"));
+                    assertTrue(body.contains("Summary"));
+                });
+    }
+
+    @Test
+    void combatPresetEndpointShouldRenderPresetEnemyReport() throws Exception {
+        User attacker = createUserWithCharacter("attacker@test.com", "Cassius");
+
+        when(userRepository.findByEmail(attacker.getEmail())).thenReturn(Optional.of(attacker));
+        when(executeEventService.executeEvent(eq(attacker.getId()), any()))
+                .thenReturn(createPresetCombatEventResult());
+
+        mockMvc.perform(post("/api/debug/combat-preset")
+                .param("attackerEmail", attacker.getEmail())
+                .param("enemyType", "brute"))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String body = result.getResponse().getContentAsString();
+                    assertTrue(body.contains("Cassius vs Brute"));
+                    assertTrue(body.contains("Outcome: Brute wins by knockout"));
+                    assertTrue(body.contains("Round 1"));
+                });
+    }
+
     private User createUserWithCharacter() {
-        User user = new User("cassius", "cassius@test.com", "hash");
-        user.assignCharacter(new Character("Cassius"));
+        return createUserWithCharacter("cassius@test.com", "Cassius");
+    }
+
+    private User createUserWithCharacter(String email, String characterName) {
+        User user = new User(characterName.toLowerCase(), email, "hash");
+        user.assignCharacter(new Character(characterName));
         return user;
+    }
+
+    private CombatEventResult createCombatEventResult() {
+        CombatResult result = new CombatResult(true, 1, false);
+        CombatReport report = new CombatReport(
+                result,
+                java.util.List.of(new CombatRoundReport(1, 4, 2, 18, 16, true)),
+                18,
+                16,
+                false);
+
+        return new CombatEventResult(3, 100, 1, 2, 50, report);
+    }
+
+    private CombatEventResult createPresetCombatEventResult() {
+        CombatResult result = new CombatResult(false, 2, false);
+        CombatReport report = new CombatReport(
+                result,
+                java.util.List.of(
+                        new CombatRoundReport(1, 3, 5, 15, 17, true),
+                        new CombatRoundReport(2, 2, 15, 0, 15, true)),
+                0,
+                15,
+                false);
+
+        return new CombatEventResult(3, 0, 1, 1, 0, report);
     }
 }

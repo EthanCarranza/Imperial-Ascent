@@ -19,34 +19,46 @@ class CombatBalanceReportTest {
 
     @Test
     void shouldProduceDeterministicBalanceSnapshot() {
+        FighterSpec baseSpec = new FighterSpec("Base", 1, 5, 5, 5, 5);
+        FighterSpec recruitSpec = fromPreset(EnemyPreset.RECRUIT);
+        FighterSpec skirmisherSpec = fromPreset(EnemyPreset.SKIRMISHER);
+        FighterSpec bruteSpec = fromPreset(EnemyPreset.BRUTE);
+        FighterSpec duelistSpec = fromPreset(EnemyPreset.DUELIST);
+        FighterSpec gamblerSpec = fromPreset(EnemyPreset.GAMBLER);
+        FighterSpec veteranSpec = fromPreset(EnemyPreset.VETERAN);
+        FighterSpec strengthSpec = new FighterSpec("Strength", 1, 8, 5, 5, 5);
+        FighterSpec agilitySpec = new FighterSpec("Agility", 1, 5, 5, 8, 5);
+        FighterSpec intelligenceSpec = new FighterSpec("Intelligence", 1, 5, 8, 5, 5);
+        FighterSpec luckSpec = new FighterSpec("Luck", 1, 5, 5, 5, 8);
+
         MatchupReport baseVsBase = simulateMatchup(
                 "Base vs Base",
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                baseSpec,
                 new FighterSpec("Base Mirror", 1, 5, 5, 5, 5),
                 BASE_SEED);
 
         MatchupReport strengthVsBase = simulateMatchup(
                 "STR +3 vs Base",
-                new FighterSpec("Strength", 1, 8, 5, 5, 5),
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                strengthSpec,
+                baseSpec,
                 BASE_SEED);
 
         MatchupReport agilityVsBase = simulateMatchup(
                 "AGI +3 vs Base",
-                new FighterSpec("Agility", 1, 5, 5, 8, 5),
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                agilitySpec,
+                baseSpec,
                 BASE_SEED);
 
         MatchupReport intelligenceVsBase = simulateMatchup(
                 "INT +3 vs Base",
-                new FighterSpec("Intelligence", 1, 5, 8, 5, 5),
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                intelligenceSpec,
+                baseSpec,
                 BASE_SEED);
 
         MatchupReport luckVsBase = simulateMatchup(
                 "LUCK +3 vs Base",
-                new FighterSpec("Luck", 1, 5, 5, 5, 8),
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                luckSpec,
+                baseSpec,
                 BASE_SEED);
 
         MatchupReport allStatsPlus10VsBase = simulateMatchup(
@@ -58,7 +70,73 @@ class CombatBalanceReportTest {
         MatchupReport allStatsPlus20VsBase = simulateMatchup(
                 "ALL +20 vs Base",
                 new FighterSpec("Omni Twenty", 1, 25, 25, 25, 25),
-                new FighterSpec("Base", 1, 5, 5, 5, 5),
+                baseSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsRecruit = simulateMatchup(
+                "Base vs Recruit",
+                baseSpec,
+                recruitSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsBrute = simulateMatchup(
+                "Base vs Brute",
+                baseSpec,
+                bruteSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsSkirmisher = simulateMatchup(
+                "Base vs Skirmisher",
+                baseSpec,
+                skirmisherSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsDuelist = simulateMatchup(
+                "Base vs Duelist",
+                baseSpec,
+                duelistSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsGambler = simulateMatchup(
+                "Base vs Gambler",
+                baseSpec,
+                gamblerSpec,
+                BASE_SEED);
+
+        MatchupReport baseVsVeteran = simulateMatchup(
+                "Base vs Veteran",
+                baseSpec,
+                veteranSpec,
+                BASE_SEED);
+
+        MatchupReport bruteVsDuelist = simulateMatchup(
+                "Brute vs Duelist",
+                bruteSpec,
+                duelistSpec,
+                BASE_SEED);
+
+        MatchupReport bruteVsGambler = simulateMatchup(
+                "Brute vs Gambler",
+                bruteSpec,
+                gamblerSpec,
+                BASE_SEED);
+
+        MatchupReport duelistVsGambler = simulateMatchup(
+                "Duelist vs Gambler",
+                duelistSpec,
+                gamblerSpec,
+                BASE_SEED);
+
+        MatchupReport strengthVsDuelist = simulateMatchup(
+                "STR +3 vs Duelist",
+                strengthSpec,
+                duelistSpec,
+                BASE_SEED);
+
+        MatchupReport agilityVsBrute = simulateMatchup(
+                "AGI +3 vs Brute",
+                agilitySpec,
+                bruteSpec,
                 BASE_SEED);
 
         ExperienceReport baseExperience = simulateExperienceProgression(
@@ -70,7 +148,7 @@ class CombatBalanceReportTest {
         GoldReport luckyGold = simulateCombatGoldReward(
                 new FighterSpec("Lucky Gold", 5, 5, 5, 5, 8));
 
-        printReports(List.of(
+        printReports("Core Stat Snapshot", List.of(
                 baseVsBase,
                 strengthVsBase,
                 agilityVsBase,
@@ -78,6 +156,18 @@ class CombatBalanceReportTest {
                 luckVsBase,
                 allStatsPlus10VsBase,
                 allStatsPlus20VsBase));
+        printReports("Preset Matchups", List.of(
+                baseVsRecruit,
+                baseVsSkirmisher,
+                baseVsBrute,
+                baseVsDuelist,
+                baseVsGambler,
+                baseVsVeteran,
+                bruteVsDuelist,
+                bruteVsGambler,
+                duelistVsGambler,
+                strengthVsDuelist,
+                agilityVsBrute));
         printExperienceReports(baseExperience, intelligenceExperience);
         printGoldReports(baseGold, luckyGold);
 
@@ -92,6 +182,9 @@ class CombatBalanceReportTest {
         assertTrue(allStatsPlus10VsBase.leftWinRate() > luckVsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > allStatsPlus10VsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > 0.90);
+        assertTrue(baseVsRecruit.leftWinRate() > 0.45 && baseVsRecruit.leftWinRate() < 0.55);
+        assertTrue(baseVsSkirmisher.rightWinRate() > baseVsRecruit.rightWinRate());
+        assertTrue(baseVsVeteran.rightWinRate() > 0.60);
 
         assertEquals(100, baseExperience.combatXp());
         assertEquals(106, intelligenceExperience.combatXp());
@@ -255,8 +348,18 @@ class CombatBalanceReportTest {
         }
     }
 
-    private void printReports(List<MatchupReport> reports) {
-        System.out.println("\n=== Combat Balance Snapshot ===");
+    private FighterSpec fromPreset(EnemyPreset preset) {
+        return new FighterSpec(
+                preset.getDisplayName(),
+                preset.getLevel(),
+                preset.getStrength(),
+                preset.getIntelligence(),
+                preset.getAgility(),
+                preset.getLuck());
+    }
+
+    private void printReports(String title, List<MatchupReport> reports) {
+        System.out.println("\n=== " + title + " ===");
         reports.forEach(report -> System.out.printf(
                 "%s -> left %.2f%% | right %.2f%% | draws %.2f%% | avg rounds %.2f%n",
                 report.label(),
