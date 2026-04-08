@@ -1,230 +1,265 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
   <head>
-    <title>Debug Panel</title>
-
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        display: flex;
-        height: 100vh;
-      }
-
-      .left {
-        width: 40%;
-        padding: 20px;
-        overflow-y: auto;
-        border-right: 1px solid #ccc;
-      }
-
-      .right {
-        width: 60%;
-        padding: 20px;
-        background: #f5f5f5;
-        overflow-y: auto;
-      }
-
-      h2 {
-        margin-top: 30px;
-      }
-
-      form {
-        margin-bottom: 15px;
-      }
-
-      input {
-        margin-bottom: 5px;
-        width: 100%;
-        padding: 5px;
-      }
-
-      button {
-        padding: 5px 10px;
-        cursor: pointer;
-      }
-
-      #output {
-        white-space: pre-wrap;
-        font-family: monospace;
-        background: #111;
-        color: #0f0;
-        padding: 15px;
-        border-radius: 5px;
-      }
-
-      .log-entry {
-        white-space: pre-wrap;
-      }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Imperial Debug Desk</title>
+    <link rel="stylesheet" th:href="@{/ui/debug-panel.css}" href="/ui/debug-panel.css" />
+    <script th:src="@{/ui/debug-panel.js}" src="/ui/debug-panel.js" defer></script>
   </head>
-
   <body>
-    <!-- LEFT: acciones -->
-    <div class="left">
-      <h1>Debug Panel</h1>
+    <div class="debug-shell">
+      <header class="top-banner">
+        <div class="top-copy">
+          <p class="kicker">Alpha Command Desk</p>
+          <h1>Imperial Debug Desk</h1>
+          <p class="lead">
+            Panel de debug con aire de arena imperial. Sigue siendo una herramienta de dev, pero
+            ahora es mas clara, mas legible y lista para inventario y tienda.
+          </p>
+        </div>
+        <div class="top-status">
+          <div class="status-chip" id="activeStatus">No active character</div>
+          <div class="status-chip status-chip--quiet">Debug only</div>
+        </div>
+      </header>
 
-      <h2>Create User</h2>
-      <form onsubmit="submitForm(event, '/api/debug/create-user')">
-        <input name="username" placeholder="Username" />
-        <input name="email" placeholder="Email" />
-        <input name="password" type="password" placeholder="Password" />
-        <button type="submit">Create</button>
-      </form>
+      <div class="layout">
+        <aside class="sidebar">
+          <nav class="rail-nav" aria-label="Secciones">
+            <a href="#lookup-section">Registro</a>
+            <a href="#profile-section">Ficha</a>
+            <a href="#armory-section">Armeria</a>
+            <a href="#command-section">Comandos</a>
+            <a href="#console-section">Consola</a>
+          </nav>
 
-      <h2>Find User</h2>
-      <form onsubmit="submitForm(event, '/api/debug/user', 'GET')">
-        <input name="email" placeholder="Email" />
-        <button type="submit">Find</button>
-      </form>
+          <section class="frame-card" id="lookup-section">
+            <div class="card-head">
+              <p class="eyebrow">Character Lookup</p>
+              <h2>Buscar personaje</h2>
+              <p class="muted">Carga una ficha por email y rellena el resto del panel con ese personaje.</p>
+            </div>
+            <form id="lookupForm" class="stack">
+              <label class="field">
+                <span>Email</span>
+                <input name="email" type="email" placeholder="Email del personaje" autocomplete="off" />
+              </label>
+              <button type="submit">Cargar ficha</button>
+            </form>
+          </section>
 
-      <h2>Create Character</h2>
-      <form onsubmit="submitForm(event, '/api/debug/create-character')">
-        <input name="email" placeholder="Email" />
-        <input name="name" placeholder="Character name" />
-        <button type="submit">Create</button>
-      </form>
+          <section class="frame-card profile-card" id="profile-section">
+            <div class="profile-shell empty" id="profileCard">
+              <div class="profile-top">
+                <div class="portrait-box">
+                  <div class="portrait-face"><span id="portraitInitials">?</span></div>
+                </div>
+                <div class="identity">
+                  <div class="badge" id="profileBadge">No Character Selected</div>
+                  <h2 id="profileName">Esperando personaje</h2>
+                  <p class="muted profile-subtitle" id="profileSubtitle">
+                    Carga un personaje para seguir recursos, stats y huecos de equipo.
+                  </p>
+                  <div class="account-row">
+                    <span>Cuenta activa</span>
+                    <strong id="emailValue">--</strong>
+                  </div>
+                </div>
+              </div>
 
-      <h2>View Character</h2>
-      <form onsubmit="submitForm(event, '/api/debug/character', 'GET')">
-        <input name="email" placeholder="Email" />
-        <button type="submit">View</button>
-      </form>
+              <div class="resource-grid">
+                <article class="mini-card">
+                  <span class="mini-label">Level</span>
+                  <strong id="levelValue">--</strong>
+                  <small>Tier actual</small>
+                </article>
+                <article class="mini-card">
+                  <span class="mini-label">XP</span>
+                  <strong id="xpValue">--</strong>
+                  <div class="meter meter--xp"><span id="xpMeter"></span></div>
+                </article>
+                <article class="mini-card">
+                  <span class="mini-label">Energy</span>
+                  <strong id="energyValue">--</strong>
+                  <div class="meter"><span id="energyMeter"></span></div>
+                </article>
+                <article class="mini-card">
+                  <span class="mini-label">Gold</span>
+                  <strong id="goldValue">--</strong>
+                  <div class="meter meter--gold"><span id="goldMeter"></span></div>
+                </article>
+              </div>
 
-      <h2>Gain XP</h2>
-      <form onsubmit="submitForm(event, '/api/debug/gain-xp')">
-        <input name="email" placeholder="Email" />
-        <input name="amount" type="number" min="1" placeholder="XP amount" />
-        <button type="submit">Gain</button>
-      </form>
+              <div class="card-head compact">
+                <p class="eyebrow">Combat Stats</p>
+                <h3>Tablero principal</h3>
+              </div>
+              <div class="stat-grid">
+                <article class="stat-card"><span>Strength</span><strong id="strengthValue">--</strong></article>
+                <article class="stat-card"><span>Intelligence</span><strong id="intelligenceValue">--</strong></article>
+                <article class="stat-card"><span>Agility</span><strong id="agilityValue">--</strong></article>
+                <article class="stat-card"><span>Luck</span><strong id="luckValue">--</strong></article>
+              </div>
+            </div>
+          </section>
 
-      <h2>Train</h2>
-      <form onsubmit="submitForm(event, '/api/debug/train')">
-        <input name="email" placeholder="Email" />
-        <select name="stat">
-          <option value="str">Strength</option>
-          <option value="int">Intelligence</option>
-          <option value="agi">Agility</option>
-          <option value="luck">Luck</option>
-        </select>
+          <section class="frame-card" id="armory-section">
+            <div class="card-head">
+              <p class="eyebrow">Armory Preview</p>
+              <h2>Equipo e inventario</h2>
+              <p class="muted">Hueco visual para la siguiente fase de tienda y objetos basicos.</p>
+            </div>
+            <div class="equipment-grid">
+              <article class="slot-card"><span>Weapon</span><strong>Empty</strong><small>Dano</small></article>
+              <article class="slot-card"><span>Armor</span><strong>Empty</strong><small>Mitigacion</small></article>
+              <article class="slot-card"><span>Accessory</span><strong>Empty</strong><small>Bonus</small></article>
+              <article class="slot-card"><span>Helm</span><strong>Locked</strong><small>Reserva</small></article>
+              <article class="slot-card"><span>Ring</span><strong>Locked</strong><small>Reserva</small></article>
+              <article class="slot-card"><span>Relic</span><strong>Locked</strong><small>Reserva</small></article>
+            </div>
+            <div class="satchel">
+              <h3>Satchel</h3>
+              <div class="inventory-grid" aria-label="Inventario de ejemplo">
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+              </div>
+              <p class="muted">Aqui podremos ver objetos de tienda, drops y recompensas.</p>
+            </div>
+          </section>
+        </aside>
 
-        <button type="submit">Train</button>
-      </form>
+        <main class="workspace">
+          <section class="frame-card" id="command-section">
+            <div class="card-head">
+              <p class="eyebrow">Debug Toolkit</p>
+              <h2>Control panels</h2>
+              <p class="muted">Setup, progresion, recursos y combate en un layout mas limpio y responsive.</p>
+            </div>
+            <div class="highlight-row">
+              <div class="highlight-pill">Auto-fill del activo</div>
+              <div class="highlight-pill">Inventario visible</div>
+              <div class="highlight-pill">Consola persistente</div>
+              <div class="highlight-pill">Alpha responsive</div>
+            </div>
+          </section>
 
-      <h2>Restore Energy</h2>
-      <form onsubmit="submitForm(event, '/api/debug/restore-energy')">
-        <input name="email" placeholder="Email" />
-        <button type="submit">Restore</button>
-      </form>
+          <section class="action-grid">
+            <article class="frame-card tool-card">
+              <div class="card-head">
+                <p class="eyebrow">Setup</p>
+                <h3>User y character</h3>
+                <p class="muted">Alta rapida para preparar cuentas y personajes de prueba.</p>
+              </div>
+              <form class="stack" data-debug-form="true" data-log-label="Create User" action="/api/debug/create-user" method="post">
+                <label class="field"><span>Username</span><input name="username" placeholder="Username" autocomplete="off" /></label>
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" autocomplete="off" /></label>
+                <label class="field"><span>Password</span><input name="password" type="password" placeholder="Password" autocomplete="off" /></label>
+                <button type="submit">Create User</button>
+              </form>
+              <form class="stack separated" data-debug-form="true" data-log-label="Create Character" action="/api/debug/create-character" method="post">
+                <label class="field"><span>User email</span><input name="email" type="email" placeholder="Email del usuario" autocomplete="off" /></label>
+                <label class="field"><span>Character name</span><input name="name" placeholder="Character name" autocomplete="off" /></label>
+                <button type="submit">Create Character</button>
+              </form>
+            </article>
 
-      <h2>Add Gold</h2>
-      <form onsubmit="submitForm(event, '/api/debug/add-gold')">
-        <input name="email" placeholder="Email" />
-        <input name="amount" type="number" min="1" placeholder="Gold" />
-        <button type="submit">Add</button>
-      </form>
-      <hr />
+            <article class="frame-card tool-card">
+              <div class="card-head">
+                <p class="eyebrow">Progression</p>
+                <h3>XP, training y energia</h3>
+                <p class="muted">Estas acciones usan el personaje activo si ya esta cargado.</p>
+              </div>
+              <form class="form-grid" data-debug-form="true" data-log-label="Gain XP" action="/api/debug/gain-xp" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>XP amount</span><input name="amount" type="number" min="1" placeholder="XP amount" /></label>
+                <button class="full-span" type="submit">Gain XP</button>
+              </form>
+              <form class="form-grid separated" data-debug-form="true" data-log-label="Train" action="/api/debug/train" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Stat</span><select name="stat"><option value="str">Strength</option><option value="int">Intelligence</option><option value="agi">Agility</option><option value="luck">Luck</option></select></label>
+                <button class="full-span" type="submit">Train Stat</button>
+              </form>
+              <form class="stack separated" data-debug-form="true" data-log-label="Restore Energy" action="/api/debug/restore-energy" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <button type="submit">Restore Energy</button>
+              </form>
+            </article>
 
-      <h2>Add Strength</h2>
-      <form onsubmit="submitForm(event, '/api/debug/add-strength')">
-        <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" min="1" placeholder="Amount" />
-        <button type="submit">Add STR</button>
-      </form>
+            <article class="frame-card tool-card">
+              <div class="card-head">
+                <p class="eyebrow">Resources</p>
+                <h3>Gold y stat tuning</h3>
+                <p class="muted">Mutaciones rapidas para fijar el estado exacto que quieres probar.</p>
+              </div>
+              <form class="form-grid" data-debug-form="true" data-log-label="Add Gold" action="/api/debug/add-gold" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Gold amount</span><input name="amount" type="number" min="1" placeholder="Gold amount" /></label>
+                <button class="full-span" type="submit">Add Gold</button>
+              </form>
+              <div class="compact-grid">
+                <form class="compact-form" data-debug-form="true" data-log-label="Add Strength" action="/api/debug/add-strength" method="post">
+                  <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                  <label class="field"><span>STR</span><input name="amount" type="number" min="1" placeholder="STR" /></label>
+                  <button type="submit">Add STR</button>
+                </form>
+                <form class="compact-form" data-debug-form="true" data-log-label="Add Intelligence" action="/api/debug/add-intelligence" method="post">
+                  <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                  <label class="field"><span>INT</span><input name="amount" type="number" min="1" placeholder="INT" /></label>
+                  <button type="submit">Add INT</button>
+                </form>
+                <form class="compact-form" data-debug-form="true" data-log-label="Add Agility" action="/api/debug/add-agility" method="post">
+                  <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                  <label class="field"><span>AGI</span><input name="amount" type="number" min="1" placeholder="AGI" /></label>
+                  <button type="submit">Add AGI</button>
+                </form>
+                <form class="compact-form" data-debug-form="true" data-log-label="Add Luck" action="/api/debug/add-luck" method="post">
+                  <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                  <label class="field"><span>LUCK</span><input name="amount" type="number" min="1" placeholder="LUCK" /></label>
+                  <button type="submit">Add LUCK</button>
+                </form>
+              </div>
+            </article>
 
-      <h2>Add Intelligence</h2>
-      <form onsubmit="submitForm(event, '/api/debug/add-intelligence')">
-        <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" min="1" placeholder="Amount" />
-        <button type="submit">Add INT</button>
-      </form>
+            <article class="frame-card tool-card">
+              <div class="card-head">
+                <p class="eyebrow">Combat</p>
+                <h3>Matchups y presets</h3>
+                <p class="muted">Prueba combates completos contra otros usuarios o contra el bestiario.</p>
+              </div>
+              <form class="form-grid" data-debug-form="true" data-log-label="Combat vs User" action="/api/debug/combat" method="post">
+                <label class="field"><span>Attacker</span><input name="attackerEmail" type="email" placeholder="Attacker email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Defender</span><input name="defenderEmail" type="email" placeholder="Defender email" autocomplete="off" /></label>
+                <button class="full-span" type="submit">Fight User</button>
+              </form>
+              <form class="form-grid separated" data-debug-form="true" data-log-label="Combat vs Preset" action="/api/debug/combat-preset" method="post">
+                <label class="field"><span>Attacker</span><input name="attackerEmail" type="email" placeholder="Attacker email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Preset</span><select name="enemyType"><option value="recruit">Recruit - baseline</option><option value="skirmisher">Skirmisher - mixed mid-tier</option><option value="brute">Brute - high STR</option><option value="duelist">Duelist - high AGI</option><option value="gambler">Gambler - high LUCK</option><option value="veteran">Veteran - mixed level 3</option></select></label>
+                <button class="full-span" type="submit">Fight Preset</button>
+              </form>
+              <div class="preset-row"><span>Recruit</span><span>Skirmisher</span><span>Brute</span><span>Duelist</span><span>Gambler</span><span>Veteran</span></div>
+            </article>
+          </section>
+        </main>
+      </div>
 
-      <h2>Add Agility</h2>
-      <form onsubmit="submitForm(event, '/api/debug/add-agility')">
-        <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" min="1" placeholder="Amount" />
-        <button type="submit">Add AGI</button>
-      </form>
-
-      <h2>Add Luck</h2>
-      <form onsubmit="submitForm(event, '/api/debug/add-luck')">
-        <input name="email" placeholder="User Email" />
-        <input name="amount" type="number" min="1" placeholder="Amount" />
-        <button type="submit">Add LUCK</button>
-      </form>
-
-      <h2>Combat</h2>
-      <form onsubmit="submitForm(event, '/api/debug/combat')">
-        <input name="attackerEmail" placeholder="Attacker email" />
-        <input name="defenderEmail" placeholder="Defender email" />
-        <button type="submit">Fight</button>
-      </form>
-
-      <h2>Combat vs Preset</h2>
-      <form onsubmit="submitForm(event, '/api/debug/combat-preset')">
-        <input name="attackerEmail" placeholder="Attacker email" />
-        <select name="enemyType">
-          <option value="recruit">Recruit - balanced</option>
-          <option value="skirmisher">Skirmisher - mixed mid-tier</option>
-          <option value="brute">Brute - high STR</option>
-          <option value="duelist">Duelist - high AGI</option>
-          <option value="gambler">Gambler - high LUCK</option>
-          <option value="veteran">Veteran - mixed level 3</option>
-        </select>
-        <button type="submit">Fight Preset</button>
-      </form>
+      <section class="frame-card console-panel" id="console-section">
+        <div class="console-top">
+          <div>
+            <p class="eyebrow">Message Console</p>
+            <h2>Combat logs y debug output</h2>
+            <p class="muted">Resultados, errores y reportes por rondas aparecen aqui en orden inverso.</p>
+          </div>
+          <button class="secondary-button" type="button" data-clear-console="true">Clear Console</button>
+        </div>
+        <div id="output" data-empty="true">
+          <div class="empty-state">Esperando acciones de debug. Carga un personaje para empezar.</div>
+        </div>
+      </section>
     </div>
-
-    <!-- RIGHT: output -->
-    <div class="right">
-      <h2>Output</h2>
-      <div id="output" data-empty="true">Aqui apareceran los resultados...</div>
-    </div>
-
-    <script>
-      function appendOutput(text) {
-        const output = document.getElementById("output");
-
-        if (output.dataset.empty === "true") {
-          output.replaceChildren();
-          output.dataset.empty = "false";
-        }
-
-        const entry = document.createElement("div");
-        entry.className = "log-entry";
-        entry.textContent = text;
-
-        if (output.firstChild) {
-          output.prepend(document.createElement("hr"));
-        }
-
-        output.prepend(entry);
-      }
-
-      async function submitForm(event, url, method = "POST") {
-        event.preventDefault();
-
-        const form = event.target;
-        const data = new FormData(form);
-        const params = new URLSearchParams(data);
-
-        let response;
-
-        try {
-          if (method === "GET") {
-            response = await fetch(url + "?" + params.toString());
-          } else {
-            response = await fetch(url, {
-              method: "POST",
-              body: params,
-            });
-          }
-
-          appendOutput(await response.text());
-        } catch (err) {
-          appendOutput("Error: " + err);
-        }
-      }
-    </script>
   </body>
 </html>
