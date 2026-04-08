@@ -524,8 +524,14 @@ button:active { transform: translateY(1px); }
 }
 
 .inventory-cell--empty {
+  display: grid;
   place-items: center;
-  min-height: 8.2rem;
+  align-self: start;
+  aspect-ratio: 4 / 3;
+  min-height: 0;
+  border-style: dashed;
+  background: linear-gradient(180deg, rgba(245, 238, 246, 0.72), rgba(214, 196, 226, 0.58));
+  color: rgba(99, 54, 111, 0.56);
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
