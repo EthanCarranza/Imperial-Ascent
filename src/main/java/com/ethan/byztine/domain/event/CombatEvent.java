@@ -57,7 +57,7 @@ public class CombatEvent implements GameEvent {
     }
 
     private int calculateExperienceReward(Character character) {
-        int intelligence = character.getStats().getIntelligence();
+        int intelligence = character.getEffectiveIntelligence();
         double effectiveIntelligenceBonus = StatScaling.positiveSoftBonus(
                 intelligence,
                 BASE_INTELLIGENCE);
@@ -67,7 +67,7 @@ public class CombatEvent implements GameEvent {
     }
 
     private int calculateGoldReward(Character character) {
-        int luck = character.getStats().getLuck();
+        int luck = character.getEffectiveLuck();
         double effectiveLuckBonus = StatScaling.positiveSoftBonus(luck, BASE_LUCK);
         double goldMultiplier = 1.0 + (effectiveLuckBonus * GOLD_BONUS_PER_LUCK_POINT);
 

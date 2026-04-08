@@ -11,9 +11,9 @@ public class CombatantFactory {
     public static Combatant fromCharacter(Character character) {
 
         int level = character.getLevel().getCurrentLevel();
-        int strength = character.getStats().getStrength();
-        int agility = character.getStats().getAgility();
-        int luck = character.getStats().getLuck();
+        int strength = character.getEffectiveStrength();
+        int agility = character.getEffectiveAgility();
+        int luck = character.getEffectiveLuck();
 
         int attack = BASE_ATTACK + level;
         int defense = BASE_DEFENSE + level;

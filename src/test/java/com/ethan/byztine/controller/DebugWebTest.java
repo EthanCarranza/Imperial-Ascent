@@ -10,6 +10,8 @@ import com.ethan.byztine.domain.combat.CombatResult;
 import com.ethan.byztine.domain.combat.CombatRoundReport;
 import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
+import com.ethan.byztine.domain.inventory.EquipmentSlot;
+import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -169,6 +171,9 @@ class DebugWebTest {
         User user = createUserWithCharacter();
         user.getCharacter().gainExperience(40);
         user.getCharacter().addGold(25);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        user.getCharacter().addItem(sword);
+        user.getCharacter().equipItem(sword.getId());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         mockMvc.perform(get("/api/debug/character-sheet")
@@ -180,7 +185,44 @@ class DebugWebTest {
                 .andExpect(jsonPath("$.experience").value(40))
                 .andExpect(jsonPath("$.experienceRequiredForNextLevel").value(100))
                 .andExpect(jsonPath("$.gold").value(25))
+                .andExpect(jsonPath("$.strength").value(7))
+                .andExpect(jsonPath("$.inventoryUsage").value(1))
+                .andExpect(jsonPath("$.equipmentSlots[0].displayName").value("Weapon"))
+                .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"))
                 .andExpect(jsonPath("$.luck").value(5));
+    }
+
+    @Test
+    void addItemPresetEndpointShouldGrantItemAndPersistUser() throws Exception {
+        User user = createUserWithCharacter();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/debug/add-item-preset")
+                .param("email", user.getEmail())
+                .param("preset", "training-sword"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Granted item: Training Sword [Weapon]"));
+
+        assertEquals(1, user.getCharacter().getInventoryUsage());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void equipItemEndpointShouldEquipItem() throws Exception {
+        User user = createUserWithCharacter();
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        user.getCharacter().addItem(sword);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/debug/equip-item")
+                .param("email", user.getEmail())
+                .param("itemId", sword.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Equipped item: " + sword.getId()));
+
+        assertTrue(user.getCharacter().getEquippedItem(EquipmentSlot.WEAPON).isPresent());
+        verify(userRepository).save(user);
     }
 
     @Test

@@ -12,6 +12,9 @@ import com.ethan.byztine.domain.event.CombatEvent;
 import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
+import com.ethan.byztine.domain.inventory.EquipmentSlot;
+import com.ethan.byztine.domain.inventory.InventoryItem;
+import com.ethan.byztine.domain.inventory.ItemPreset;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +24,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -156,6 +162,55 @@ public class DebugApiController {
                 character -> character.getStats().increaseLuck(amount));
     }
 
+    @PostMapping("/add-item-preset")
+    public String addItemPreset(@RequestParam String email,
+            @RequestParam String preset) {
+
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+            ItemPreset itemPreset = ItemPreset.fromId(preset);
+            InventoryItem item = InventoryItem.fromPreset(itemPreset);
+
+            character.addItem(item);
+            userRepository.save(user);
+
+            return "Granted item: " + item.getName() + " [" + item.getSlot().getDisplayName() + "]";
+        });
+    }
+
+    @PostMapping("/equip-item")
+    public String equipItem(@RequestParam String email,
+            @RequestParam String itemId) {
+
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+            UUID parsedItemId = parseUuid(itemId, "Item id");
+
+            character.equipItem(parsedItemId);
+            userRepository.save(user);
+
+            return "Equipped item: " + parsedItemId;
+        });
+    }
+
+    @PostMapping("/unequip-slot")
+    public String unequipSlot(@RequestParam String email,
+            @RequestParam String slot) {
+
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+            EquipmentSlot equipmentSlot = EquipmentSlot.fromId(slot);
+
+            character.unequipSlot(equipmentSlot);
+            userRepository.save(user);
+
+            return "Unequipped slot: " + equipmentSlot.getDisplayName();
+        });
+    }
+
     @PostMapping("/train")
     public String train(@RequestParam String email,
             @RequestParam String stat) {
@@ -232,10 +287,16 @@ public class DebugApiController {
                     "\nEnergy: " + character.getEnergy().getCurrentEnergy() + " / "
                     + character.getEnergy().getMaxEnergy() +
                     "\nGold: " + character.getGold() +
-                    "\nSTR: " + character.getStats().getStrength() +
-                    "\nINT: " + character.getStats().getIntelligence() +
-                    "\nAGI: " + character.getStats().getAgility() +
-                    "\nLUCK: " + character.getStats().getLuck();
+                    "\nSTR: " + character.getEffectiveStrength() +
+                    " (base " + character.getStats().getStrength() + ")" +
+                    "\nINT: " + character.getEffectiveIntelligence() +
+                    " (base " + character.getStats().getIntelligence() + ")" +
+                    "\nAGI: " + character.getEffectiveAgility() +
+                    " (base " + character.getStats().getAgility() + ")" +
+                    "\nLUCK: " + character.getEffectiveLuck() +
+                    " (base " + character.getStats().getLuck() + ")" +
+                    "\nInventory: " + character.getInventoryUsage() + " / "
+                    + character.getInventoryCapacity();
         });
     }
 
@@ -256,10 +317,22 @@ public class DebugApiController {
                     character.getEnergy().getCurrentEnergy(),
                     character.getEnergy().getMaxEnergy(),
                     character.getGold(),
+                    character.getEffectiveStrength(),
+                    character.getEffectiveIntelligence(),
+                    character.getEffectiveAgility(),
+                    character.getEffectiveLuck(),
                     character.getStats().getStrength(),
                     character.getStats().getIntelligence(),
                     character.getStats().getAgility(),
-                    character.getStats().getLuck()));
+                    character.getStats().getLuck(),
+                    character.getStrengthBonusFromEquipment(),
+                    character.getIntelligenceBonusFromEquipment(),
+                    character.getAgilityBonusFromEquipment(),
+                    character.getLuckBonusFromEquipment(),
+                    character.getInventoryCapacity(),
+                    character.getInventoryUsage(),
+                    buildEquipmentSlots(character),
+                    buildInventoryItems(character)));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
@@ -317,6 +390,59 @@ public class DebugApiController {
         }
 
         return stat.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private UUID parseUuid(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(label + " is invalid");
+        }
+
+        try {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(label + " is invalid");
+        }
+    }
+
+    private List<EquipmentSlotResponse> buildEquipmentSlots(Character character) {
+        return Arrays.stream(EquipmentSlot.values())
+                .map(slot -> {
+                    InventoryItem item = character.getEquippedItem(slot).orElse(null);
+
+                    if (item == null) {
+                        return new EquipmentSlotResponse(
+                                slot.getId(),
+                                slot.getDisplayName(),
+                                null,
+                                null,
+                                "Empty");
+                    }
+
+                    return new EquipmentSlotResponse(
+                            slot.getId(),
+                            slot.getDisplayName(),
+                            item.getId() == null ? null : item.getId().toString(),
+                            item.getName(),
+                            item.getBonusSummary());
+                })
+                .toList();
+    }
+
+    private List<InventoryItemResponse> buildInventoryItems(Character character) {
+        return character.getInventoryItems().stream()
+                .map(item -> new InventoryItemResponse(
+                        item.getId() == null ? null : item.getId().toString(),
+                        item.getName(),
+                        item.getSlot().getId(),
+                        item.getSlot().getDisplayName(),
+                        item.isEquipped(),
+                        item.getGoldValue(),
+                        item.getStrengthBonus(),
+                        item.getIntelligenceBonus(),
+                        item.getAgilityBonus(),
+                        item.getLuckBonus(),
+                        item.getBonusSummary()))
+                .toList();
     }
 
     private String formatCombatResponse(
@@ -454,6 +580,40 @@ public class DebugApiController {
             int strength,
             int intelligence,
             int agility,
-            int luck) {
+            int luck,
+            int baseStrength,
+            int baseIntelligence,
+            int baseAgility,
+            int baseLuck,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int inventoryCapacity,
+            int inventoryUsage,
+            List<EquipmentSlotResponse> equipmentSlots,
+            List<InventoryItemResponse> inventoryItems) {
+    }
+
+    private record EquipmentSlotResponse(
+            String slot,
+            String displayName,
+            String itemId,
+            String itemName,
+            String bonusSummary) {
+    }
+
+    private record InventoryItemResponse(
+            String id,
+            String name,
+            String slot,
+            String slotDisplayName,
+            boolean equipped,
+            int goldValue,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            String bonusSummary) {
     }
 }

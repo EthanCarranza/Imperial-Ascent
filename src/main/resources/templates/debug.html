@@ -96,38 +96,27 @@
                 <h3>Tablero principal</h3>
               </div>
               <div class="stat-grid">
-                <article class="stat-card"><span>Strength</span><strong id="strengthValue">--</strong></article>
-                <article class="stat-card"><span>Intelligence</span><strong id="intelligenceValue">--</strong></article>
-                <article class="stat-card"><span>Agility</span><strong id="agilityValue">--</strong></article>
-                <article class="stat-card"><span>Luck</span><strong id="luckValue">--</strong></article>
+                <article class="stat-card"><span>Strength</span><strong id="strengthValue">--</strong><small id="strengthMeta">Base --</small></article>
+                <article class="stat-card"><span>Intelligence</span><strong id="intelligenceValue">--</strong><small id="intelligenceMeta">Base --</small></article>
+                <article class="stat-card"><span>Agility</span><strong id="agilityValue">--</strong><small id="agilityMeta">Base --</small></article>
+                <article class="stat-card"><span>Luck</span><strong id="luckValue">--</strong><small id="luckMeta">Base --</small></article>
               </div>
             </div>
           </section>
 
-          <section class="frame-card" id="armory-section">
+          <section class="frame-card armory-panel" id="armory-section">
             <div class="card-head">
               <p class="eyebrow">Armory Preview</p>
               <h2>Equipo e inventario</h2>
               <p class="muted">Hueco visual para la siguiente fase de tienda y objetos basicos.</p>
             </div>
-            <div class="equipment-grid">
-              <article class="slot-card"><span>Weapon</span><strong>Empty</strong><small>Dano</small></article>
-              <article class="slot-card"><span>Armor</span><strong>Empty</strong><small>Mitigacion</small></article>
-              <article class="slot-card"><span>Accessory</span><strong>Empty</strong><small>Bonus</small></article>
-              <article class="slot-card"><span>Helm</span><strong>Locked</strong><small>Reserva</small></article>
-              <article class="slot-card"><span>Ring</span><strong>Locked</strong><small>Reserva</small></article>
-              <article class="slot-card"><span>Relic</span><strong>Locked</strong><small>Reserva</small></article>
-            </div>
+            <div class="equipment-grid" id="equipmentGrid"></div>
             <div class="satchel">
-              <h3>Satchel</h3>
-              <div class="inventory-grid" aria-label="Inventario de ejemplo">
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
-                <span class="inventory-cell">I</span><span class="inventory-cell">I</span>
+              <div class="inventory-head">
+                <h3>Satchel</h3>
+                <div class="inventory-usage" id="inventoryUsage">0 / 12</div>
               </div>
+              <div class="inventory-grid" id="inventoryGrid" aria-label="Inventario del personaje"></div>
               <p class="muted">Aqui podremos ver objetos de tienda, drops y recompensas.</p>
             </div>
           </section>
@@ -242,6 +231,22 @@
                 <button class="full-span" type="submit">Fight Preset</button>
               </form>
               <div class="preset-row"><span>Recruit</span><span>Skirmisher</span><span>Brute</span><span>Duelist</span><span>Gambler</span><span>Veteran</span></div>
+            </article>
+
+            <article class="frame-card tool-card">
+              <div class="card-head">
+                <p class="eyebrow">Inventory</p>
+                <h3>Grant items y equipo</h3>
+                <p class="muted">Concede presets desde debug y equipa o desequipa directamente desde la ficha lateral.</p>
+              </div>
+              <form class="form-grid" data-debug-form="true" data-log-label="Grant Item" action="/api/debug/add-item-preset" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Preset</span><select name="preset"><option value="training-sword">Training Sword</option><option value="lamellar-armor">Lamellar Armor</option><option value="cavalry-clasp">Cavalry Clasp</option><option value="tagmatic-helm">Tagmatic Helm</option><option value="porphyry-ring">Porphyry Ring</option><option value="imperial-icon">Imperial Icon</option></select></label>
+                <button class="full-span" type="submit">Grant Preset Item</button>
+              </form>
+              <div class="inventory-help">
+                <span>Los bonus de equipo afectan a la ficha y al combate desde esta misma version.</span>
+              </div>
             </article>
           </section>
         </main>

@@ -1,15 +1,32 @@
 package com.ethan.byztine.domain;
 
-import com.ethan.byztine.domain.event.GameEvent;
 import com.ethan.byztine.domain.event.EventResult;
+import com.ethan.byztine.domain.event.GameEvent;
+import com.ethan.byztine.domain.inventory.EquipmentSlot;
+import com.ethan.byztine.domain.inventory.InventoryItem;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 
-import jakarta.persistence.*;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.ToIntFunction;
 
 @Entity
 @Table(name = "characters")
 public class Character {
+
+    private static final int BASE_ENERGY = 10;
+    private static final int INVENTORY_CAPACITY = 12;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,9 +43,12 @@ public class Character {
     @Embedded
     private Stats stats;
 
-    private static final int BASE_ENERGY = 10;
-
     private int gold;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "character_id")
+    @OrderColumn(name = "inventory_position")
+    private List<InventoryItem> inventoryItems = new ArrayList<>();
 
     protected Character() {
     }
@@ -81,6 +101,50 @@ public class Character {
         return gold;
     }
 
+    public List<InventoryItem> getInventoryItems() {
+        return List.copyOf(inventoryItems);
+    }
+
+    public int getInventoryCapacity() {
+        return INVENTORY_CAPACITY;
+    }
+
+    public int getInventoryUsage() {
+        return inventoryItems.size();
+    }
+
+    public int getStrengthBonusFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getStrengthBonus);
+    }
+
+    public int getIntelligenceBonusFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getIntelligenceBonus);
+    }
+
+    public int getAgilityBonusFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getAgilityBonus);
+    }
+
+    public int getLuckBonusFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getLuckBonus);
+    }
+
+    public int getEffectiveStrength() {
+        return stats.getStrength() + getStrengthBonusFromEquipment();
+    }
+
+    public int getEffectiveIntelligence() {
+        return stats.getIntelligence() + getIntelligenceBonusFromEquipment();
+    }
+
+    public int getEffectiveAgility() {
+        return stats.getAgility() + getAgilityBonusFromEquipment();
+    }
+
+    public int getEffectiveLuck() {
+        return stats.getLuck() + getLuckBonusFromEquipment();
+    }
+
     public void gainExperience(int amount) {
         boolean leveledUp = level.addExperience(amount);
 
@@ -110,7 +174,41 @@ public class Character {
         this.gold -= amount;
     }
 
-    // 🔥 NUEVO: lógica encapsulada del entrenamiento
+    public void addItem(InventoryItem item) {
+        if (item == null) {
+            throw new IllegalArgumentException("Item cannot be null");
+        }
+
+        if (inventoryItems.size() >= INVENTORY_CAPACITY) {
+            throw new IllegalStateException("Inventory is full");
+        }
+
+        inventoryItems.add(item);
+    }
+
+    public void equipItem(UUID itemId) {
+        InventoryItem item = requireInventoryItem(itemId);
+
+        unequipEquippedItem(item.getSlot());
+        item.equip();
+    }
+
+    public void unequipSlot(EquipmentSlot slot) {
+        if (slot == null) {
+            throw new IllegalArgumentException("Equipment slot cannot be null");
+        }
+
+        InventoryItem equippedItem = findEquippedItem(slot)
+                .orElseThrow(() -> new IllegalStateException(
+                        "No equipped item in slot: " + slot.getDisplayName()));
+
+        equippedItem.unequip();
+    }
+
+    public Optional<InventoryItem> getEquippedItem(EquipmentSlot slot) {
+        return findEquippedItem(slot);
+    }
+
     public EventResult applyTraining(int energyCost, int xp, int goldReward) {
 
         int levelBefore = getCurrentLevel();
@@ -127,5 +225,34 @@ public class Character {
                 levelBefore,
                 levelAfter,
                 goldReward);
+    }
+
+    private InventoryItem requireInventoryItem(UUID itemId) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("Item id cannot be null");
+        }
+
+        return inventoryItems.stream()
+                .filter(item -> itemId.equals(item.getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+    }
+
+    private Optional<InventoryItem> findEquippedItem(EquipmentSlot slot) {
+        return inventoryItems.stream()
+                .filter(InventoryItem::isEquipped)
+                .filter(item -> item.getSlot() == slot)
+                .findFirst();
+    }
+
+    private void unequipEquippedItem(EquipmentSlot slot) {
+        findEquippedItem(slot).ifPresent(InventoryItem::unequip);
+    }
+
+    private int calculateEquippedBonus(ToIntFunction<InventoryItem> extractor) {
+        return inventoryItems.stream()
+                .filter(InventoryItem::isEquipped)
+                .mapToInt(extractor)
+                .sum();
     }
 }

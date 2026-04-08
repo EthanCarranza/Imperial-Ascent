@@ -56,7 +56,7 @@ public class TrainingEvent implements GameEvent {
     }
 
     private int calculateExperienceReward(Character character) {
-        int intelligence = character.getStats().getIntelligence();
+        int intelligence = character.getEffectiveIntelligence();
         double effectiveIntelligenceBonus = StatScaling.positiveSoftBonus(
                 intelligence,
                 BASE_INTELLIGENCE);

@@ -1,4 +1,12 @@
 const state = { activeEmail: null, activeName: null };
+const defaultEquipmentSlots = [
+  { slot: "weapon", displayName: "Weapon", itemName: null, bonusSummary: "Empty" },
+  { slot: "armor", displayName: "Armor", itemName: null, bonusSummary: "Empty" },
+  { slot: "accessory", displayName: "Accessory", itemName: null, bonusSummary: "Empty" },
+  { slot: "helm", displayName: "Helm", itemName: null, bonusSummary: "Empty" },
+  { slot: "ring", displayName: "Ring", itemName: null, bonusSummary: "Empty" },
+  { slot: "relic", displayName: "Relic", itemName: null, bonusSummary: "Empty" },
+];
 
 const getById = (id) => document.getElementById(id);
 
@@ -18,6 +26,13 @@ const setFill = (id, current, max) => {
   const safeMax = Math.max(1, Number(max) || 0);
   const percentage = Math.max(0, Math.min(100, ((Number(current) || 0) / safeMax) * 100));
   element.style.setProperty("--fill", `${percentage}%`);
+};
+
+const setStatMeta = (id, baseValue, bonusValue) => {
+  const bonus = Number(bonusValue) || 0;
+  const base = Number(baseValue) || 0;
+  const suffix = bonus > 0 ? ` | Gear +${bonus}` : "";
+  setText(id, `Base ${base}${suffix}`);
 };
 
 const initials = (name) => {
@@ -55,15 +70,127 @@ function updateCharacterSheet(sheet) {
   setText("intelligenceValue", sheet.intelligence);
   setText("agilityValue", sheet.agility);
   setText("luckValue", sheet.luck);
+  setStatMeta("strengthMeta", sheet.baseStrength, sheet.strengthBonus);
+  setStatMeta("intelligenceMeta", sheet.baseIntelligence, sheet.intelligenceBonus);
+  setStatMeta("agilityMeta", sheet.baseAgility, sheet.agilityBonus);
+  setStatMeta("luckMeta", sheet.baseLuck, sheet.luckBonus);
   setText("activeStatus", `${sheet.name} active`);
+  setText("inventoryUsage", `${sheet.inventoryUsage} / ${sheet.inventoryCapacity}`);
 
   setFill("xpMeter", sheet.experience, sheet.experienceRequiredForNextLevel);
   setFill("energyMeter", sheet.currentEnergy, sheet.maxEnergy);
   setFill("goldMeter", Math.min(sheet.gold, 100), 100);
+  renderEquipmentSlots(sheet.equipmentSlots ?? []);
+  renderInventory(sheet.inventoryItems ?? [], sheet.inventoryCapacity ?? 0);
 
   document.querySelectorAll("[data-active-character='true']").forEach((input) => {
     input.value = sheet.email;
   });
+}
+
+function createSlotCard(slot) {
+  const card = document.createElement("article");
+  card.className = `slot-card ${slot.itemName ? "slot-card--equipped" : "slot-card--empty"}`;
+
+  const slotLabel = document.createElement("span");
+  slotLabel.className = "slot-card__slot";
+  slotLabel.textContent = slot.displayName;
+
+  const title = document.createElement("strong");
+  title.textContent = slot.itemName ?? "Empty";
+
+  const bonus = document.createElement("small");
+  bonus.className = "slot-card__bonus";
+  bonus.textContent = slot.bonusSummary;
+
+  card.append(slotLabel, title, bonus);
+
+  if (slot.itemName) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "mini-action";
+    button.dataset.unequipSlot = slot.slot;
+    button.textContent = "Unequip";
+    card.append(button);
+  }
+
+  return card;
+}
+
+function renderEquipmentSlots(slots) {
+  const grid = getById("equipmentGrid");
+  if (!grid) {
+    return;
+  }
+
+  grid.replaceChildren();
+  slots.forEach((slot) => {
+    grid.append(createSlotCard(slot));
+  });
+}
+
+function createInventoryItemCell(item) {
+  const cell = document.createElement("article");
+  cell.className = `inventory-cell inventory-cell--item ${item.equipped ? "inventory-cell--equipped" : ""}`;
+
+  const slot = document.createElement("span");
+  slot.className = "inventory-item__slot";
+  slot.textContent = item.slotDisplayName;
+
+  const title = document.createElement("strong");
+  title.className = "inventory-item__name";
+  title.textContent = item.name;
+
+  const bonus = document.createElement("div");
+  bonus.className = "inventory-item__bonus";
+  bonus.textContent = item.bonusSummary;
+
+  const value = document.createElement("div");
+  value.className = "inventory-item__value";
+  value.textContent = `${item.goldValue} gold value`;
+
+  cell.append(slot, title, bonus, value);
+
+  if (item.equipped) {
+    const status = document.createElement("div");
+    status.className = "inventory-item__status";
+    status.textContent = "Equipped";
+    cell.append(status);
+  } else {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "mini-action";
+    button.dataset.equipItem = item.id;
+    button.textContent = "Equip";
+    cell.append(button);
+  }
+
+  return cell;
+}
+
+function createEmptyInventoryCell() {
+  const cell = document.createElement("div");
+  cell.className = "inventory-cell inventory-cell--empty";
+  cell.textContent = "Empty";
+  return cell;
+}
+
+function renderInventory(items, capacity) {
+  const grid = getById("inventoryGrid");
+  if (!grid) {
+    return;
+  }
+
+  grid.replaceChildren();
+
+  items.forEach((item) => {
+    grid.append(createInventoryItemCell(item));
+  });
+
+  const emptySlots = Math.max(0, capacity - items.length);
+  for (let index = 0; index < emptySlots; index += 1) {
+    grid.append(createEmptyInventoryCell());
+  }
 }
 
 function appendOutput(title, text, tone = "info") {
@@ -137,7 +264,7 @@ async function loadCharacter(email, options = {}) {
     if (log) {
       appendOutput(
         "Character Lookup",
-        `${payload.name} loaded.\nLevel ${payload.level}\nGold ${payload.gold}\nSTR ${payload.strength} | INT ${payload.intelligence} | AGI ${payload.agility} | LUCK ${payload.luck}`,
+        `${payload.name} loaded.\nLevel ${payload.level}\nGold ${payload.gold}\nInventory ${payload.inventoryUsage}/${payload.inventoryCapacity}\nSTR ${payload.strength} | INT ${payload.intelligence} | AGI ${payload.agility} | LUCK ${payload.luck}`,
       );
     }
   } catch (error) {
@@ -212,7 +339,62 @@ async function submitDebugForm(event) {
   }
 }
 
+async function runInventoryAction(url, params, label) {
+  if (!state.activeEmail) {
+    appendOutput(label, "Load a character first.", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams(params),
+    });
+
+    appendOutput(
+      label,
+      await response.text(),
+      response.ok ? "info" : "error",
+    );
+
+    await loadCharacter(state.activeEmail, { log: false, silent: true });
+  } catch (error) {
+    appendOutput(label, `Error: ${error}`, "error");
+  }
+}
+
+function handleInventoryClick(event) {
+  const equipButton = event.target.closest("[data-equip-item]");
+  if (equipButton) {
+    runInventoryAction(
+      "/api/debug/equip-item",
+      {
+        email: state.activeEmail,
+        itemId: equipButton.dataset.equipItem,
+      },
+      "Equip Item",
+    );
+    return;
+  }
+
+  const unequipButton = event.target.closest("[data-unequip-slot]");
+  if (unequipButton) {
+    runInventoryAction(
+      "/api/debug/unequip-slot",
+      {
+        email: state.activeEmail,
+        slot: unequipButton.dataset.unequipSlot,
+      },
+      "Unequip Slot",
+    );
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  renderEquipmentSlots(defaultEquipmentSlots);
+  renderInventory([], 12);
+  setText("inventoryUsage", "0 / 12");
+
   getById("lookupForm")?.addEventListener("submit", loadCharacterFromForm);
 
   document.querySelectorAll("[data-debug-form='true']").forEach((form) => {
@@ -222,4 +404,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .querySelector("[data-clear-console='true']")
     ?.addEventListener("click", clearConsole);
+
+  document.addEventListener("click", handleInventoryClick);
 });
