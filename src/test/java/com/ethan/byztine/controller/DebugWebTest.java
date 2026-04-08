@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -161,6 +162,25 @@ class DebugWebTest {
                 .andExpect(status().isOk())
                 .andExpect(result -> assertTrue(
                         result.getResponse().getContentAsString().contains("LUCK: 5")));
+    }
+
+    @Test
+    void characterSheetEndpointShouldExposeStructuredCharacterData() throws Exception {
+        User user = createUserWithCharacter();
+        user.getCharacter().gainExperience(40);
+        user.getCharacter().addGold(25);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/api/debug/character-sheet")
+                .param("email", user.getEmail()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Cassius"))
+                .andExpect(jsonPath("$.email").value(user.getEmail()))
+                .andExpect(jsonPath("$.level").value(1))
+                .andExpect(jsonPath("$.experience").value(40))
+                .andExpect(jsonPath("$.experienceRequiredForNextLevel").value(100))
+                .andExpect(jsonPath("$.gold").value(25))
+                .andExpect(jsonPath("$.luck").value(5));
     }
 
     @Test

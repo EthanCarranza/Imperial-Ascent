@@ -14,6 +14,7 @@ import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -237,6 +239,32 @@ public class DebugApiController {
         });
     }
 
+    @GetMapping("/character-sheet")
+    public ResponseEntity<?> getCharacterSheet(@RequestParam String email) {
+
+        try {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+
+            return ResponseEntity.ok(new CharacterSheetResponse(
+                    user.getUsername(),
+                    user.getEmail(),
+                    character.getName(),
+                    character.getCurrentLevel(),
+                    character.getCurrentExperience(),
+                    character.getCurrentLevel() * 100,
+                    character.getEnergy().getCurrentEnergy(),
+                    character.getEnergy().getMaxEnergy(),
+                    character.getGold(),
+                    character.getStats().getStrength(),
+                    character.getStats().getIntelligence(),
+                    character.getStats().getAgility(),
+                    character.getStats().getLuck()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     private String updateStat(String email,
             int amount,
             String label,
@@ -411,5 +439,21 @@ public class DebugApiController {
 
         return actorName + " deals " + damage + " damage to " + targetName
                 + ". " + targetName + " is now at " + targetHealthAfterAttack + " HP.";
+    }
+
+    private record CharacterSheetResponse(
+            String username,
+            String email,
+            String name,
+            int level,
+            int experience,
+            int experienceRequiredForNextLevel,
+            int currentEnergy,
+            int maxEnergy,
+            int gold,
+            int strength,
+            int intelligence,
+            int agility,
+            int luck) {
     }
 }
