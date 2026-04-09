@@ -1,4 +1,4 @@
-const state = { activeEmail: null, activeName: null };
+const state = { activeEmail: null, activeName: null, shopLevel: null };
 const defaultEquipmentSlots = [
   { slot: "weapon", displayName: "Weapon", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
   { slot: "armor", displayName: "Armor", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
@@ -103,6 +103,7 @@ function updateCharacterSheet(sheet) {
   setStatMeta("luckMeta", sheet.baseLuck, sheet.luckBonus);
   setText("activeStatus", `${sheet.name} active`);
   setText("inventoryUsage", `${sheet.inventoryUsage} / ${sheet.inventoryCapacity}`);
+  syncShopLevelOptions(sheet.level);
 
   setFill("xpMeter", sheet.experience, sheet.experienceRequiredForNextLevel);
   setFill("energyMeter", sheet.currentEnergy, sheet.maxEnergy);
@@ -236,6 +237,123 @@ function renderInventory(items, capacity) {
   }
 }
 
+function syncShopLevelOptions(characterLevel) {
+  const select = getById("shopLevelSelect");
+  if (!select) {
+    return;
+  }
+
+  const safeCharacterLevel = Math.max(1, Number(characterLevel) || 1);
+  const currentLevel =
+    Number(select.value) || Number(state.shopLevel) || safeCharacterLevel;
+  const nextLevel = Math.min(safeCharacterLevel, Math.max(1, currentLevel));
+
+  select.replaceChildren();
+
+  for (let level = safeCharacterLevel; level >= 1; level -= 1) {
+    const option = document.createElement("option");
+    option.value = String(level);
+    option.textContent = `Lv. ${level}`;
+    if (level === nextLevel) {
+      option.selected = true;
+    }
+    select.append(option);
+  }
+
+  select.disabled = false;
+  state.shopLevel = nextLevel;
+  setText("shopLevelCap", `Level cap Lv. ${safeCharacterLevel}`);
+}
+
+function createShopOfferCard(offer) {
+  const card = document.createElement("article");
+  card.className = "shop-card";
+
+  const slot = document.createElement("span");
+  slot.className = "shop-card__slot";
+  slot.textContent = offer.slotDisplayName;
+
+  const title = document.createElement("strong");
+  title.className = "shop-card__name";
+  title.textContent = offer.name;
+
+  const level = document.createElement("div");
+  level.className = "shop-card__level";
+  level.textContent = `Lv. ${offer.level} Common`;
+
+  const combat = document.createElement("div");
+  combat.className = "shop-card__combat";
+  combat.textContent = formatCombatSummary(offer);
+
+  const bonus = document.createElement("div");
+  bonus.className = "shop-card__bonus";
+  bonus.textContent = formatStatSummary(offer);
+
+  const price = document.createElement("div");
+  price.className = "shop-card__price";
+  price.textContent = `${offer.price} gold`;
+
+  const value = document.createElement("div");
+  value.className = "shop-card__value";
+  value.textContent = `Value ${offer.goldValue}`;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "mini-action";
+  button.dataset.buyPreset = offer.presetId;
+  button.dataset.buyLevel = offer.level;
+  button.disabled = !offer.affordable;
+  button.textContent = offer.affordable ? "Buy" : "Need Gold";
+
+  card.append(slot, title, level, combat, bonus, price, value, button);
+  return card;
+}
+
+function renderShopEmpty(message) {
+  const grid = getById("shopGrid");
+  if (!grid) {
+    return;
+  }
+
+  grid.replaceChildren();
+
+  const emptyState = document.createElement("div");
+  emptyState.className = "shop-empty";
+  emptyState.textContent = message;
+  grid.append(emptyState);
+}
+
+function renderShopOffers(offers) {
+  const grid = getById("shopGrid");
+  if (!grid) {
+    return;
+  }
+
+  grid.replaceChildren();
+
+  if (!offers.length) {
+    renderShopEmpty("No hay ofertas para este nivel.");
+    return;
+  }
+
+  offers.forEach((offer) => {
+    grid.append(createShopOfferCard(offer));
+  });
+}
+
+function updateShopCatalog(catalog) {
+  state.shopLevel = catalog.selectedLevel;
+  setText("shopSummary", `Vendor stock comun para Lv. ${catalog.selectedLevel}.`);
+  setText("shopGoldStatus", `${catalog.gold} gold`);
+
+  const select = getById("shopLevelSelect");
+  if (select) {
+    select.value = String(catalog.selectedLevel);
+  }
+
+  renderShopOffers(catalog.offers ?? []);
+}
+
 function appendOutput(title, text, tone = "info") {
   const output = getById("output");
   if (!output) {
@@ -303,6 +421,7 @@ async function loadCharacter(email, options = {}) {
     }
 
     updateCharacterSheet(payload);
+    await loadShopOffers(payload.email, { silent: true, log: false });
 
     if (log) {
       appendOutput(
@@ -313,6 +432,47 @@ async function loadCharacter(email, options = {}) {
   } catch (error) {
     if (!silent) {
       appendOutput("Character Lookup", `Error: ${error}`, "error");
+    }
+  }
+}
+
+async function loadShopOffers(email, options = {}) {
+  const { silent = true, log = false } = options;
+
+  if (!email) {
+    return;
+  }
+
+  const selectedLevel =
+    Number(getById("shopLevelSelect")?.value || state.shopLevel || 0) || null;
+  const query = new URLSearchParams({ email });
+
+  if (selectedLevel) {
+    query.set("level", String(selectedLevel));
+  }
+
+  try {
+    const response = await fetch(`/api/debug/shop-offers?${query.toString()}`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      if (!silent) {
+        appendOutput("Shop Offers", payload.message ?? "Shop unavailable", "error");
+      }
+      return;
+    }
+
+    updateShopCatalog(payload);
+
+    if (log) {
+      appendOutput(
+        "Shop Offers",
+        `${payload.offers.length} common offers for Lv. ${payload.selectedLevel}.\nGold ${payload.gold}`,
+      );
+    }
+  } catch (error) {
+    if (!silent) {
+      appendOutput("Shop Offers", `Error: ${error}`, "error");
     }
   }
 }
@@ -407,6 +567,20 @@ async function runInventoryAction(url, params, label) {
 }
 
 function handleInventoryClick(event) {
+  const buyButton = event.target.closest("[data-buy-preset]");
+  if (buyButton) {
+    runInventoryAction(
+      "/api/debug/buy-item",
+      {
+        email: state.activeEmail,
+        preset: buyButton.dataset.buyPreset,
+        level: buyButton.dataset.buyLevel,
+      },
+      "Buy Item",
+    );
+    return;
+  }
+
   const equipButton = event.target.closest("[data-equip-item]");
   if (equipButton) {
     runInventoryAction(
@@ -433,12 +607,27 @@ function handleInventoryClick(event) {
   }
 }
 
+function handleShopLevelChange(event) {
+  const nextLevel = Number(event.currentTarget.value) || null;
+  state.shopLevel = nextLevel;
+
+  if (!state.activeEmail) {
+    return;
+  }
+
+  loadShopOffers(state.activeEmail, { silent: false, log: false });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderEquipmentSlots(defaultEquipmentSlots);
   renderInventory([], 12);
+  renderShopEmpty("Carga un personaje para ver ofertas comunes.");
   setText("inventoryUsage", "0 / 12");
+  setText("shopSummary", "Carga un personaje para ver la tienda.");
+  setText("shopGoldStatus", "Gold --");
 
   getById("lookupForm")?.addEventListener("submit", loadCharacterFromForm);
+  getById("shopLevelSelect")?.addEventListener("change", handleShopLevelChange);
 
   document.querySelectorAll("[data-debug-form='true']").forEach((form) => {
     form.addEventListener("submit", submitDebugForm);

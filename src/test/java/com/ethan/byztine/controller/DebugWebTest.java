@@ -1,6 +1,7 @@
 package com.ethan.byztine.controller;
 
 import com.ethan.byztine.application.ExecuteEventService;
+import com.ethan.byztine.application.ShopService;
 import com.ethan.byztine.application.UserService;
 import com.ethan.byztine.config.SecurityConfig;
 import com.ethan.byztine.domain.Character;
@@ -59,6 +60,9 @@ class DebugWebTest {
 
     @MockitoBean
     private ExecuteEventService executeEventService;
+
+    @MockitoBean
+    private ShopService shopService;
 
     @MockitoBean
     private CombatEngine combatEngine;
@@ -277,6 +281,63 @@ class DebugWebTest {
 
         assertTrue(user.getCharacter().getEquippedItem(EquipmentSlot.WEAPON).isPresent());
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void shopOffersEndpointShouldExposeVendorStock() throws Exception {
+        when(shopService.getCommonOffers("cassius@test.com", 2))
+                .thenReturn(new ShopService.ShopCatalog(
+                        3,
+                        2,
+                        120,
+                        java.util.List.of(new ShopService.ShopOffer(
+                                "training-sword",
+                                "Training Sword",
+                                "weapon",
+                                "Weapon",
+                                2,
+                                84,
+                                62,
+                                0,
+                                0,
+                                0,
+                                0,
+                                3,
+                                0,
+                                true,
+                                "DMG +3"))));
+
+        mockMvc.perform(get("/api/debug/shop-offers")
+                .param("email", "cassius@test.com")
+                .param("level", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.characterLevel").value(3))
+                .andExpect(jsonPath("$.selectedLevel").value(2))
+                .andExpect(jsonPath("$.gold").value(120))
+                .andExpect(jsonPath("$.offers[0].presetId").value("training-sword"))
+                .andExpect(jsonPath("$.offers[0].name").value("Training Sword"))
+                .andExpect(jsonPath("$.offers[0].price").value(84))
+                .andExpect(jsonPath("$.offers[0].weaponDamage").value(3))
+                .andExpect(jsonPath("$.offers[0].affordable").value(true));
+    }
+
+    @Test
+    void buyItemEndpointShouldPurchaseFromShopService() throws Exception {
+        when(shopService.buyCommonItem("cassius@test.com", "training-sword", 2))
+                .thenReturn(new ShopService.ShopPurchase(
+                        "Training Sword",
+                        "Weapon",
+                        2,
+                        84,
+                        36));
+
+        mockMvc.perform(post("/api/debug/buy-item")
+                .param("email", "cassius@test.com")
+                .param("preset", "training-sword")
+                .param("level", "2"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "Purchased item: Training Sword [Weapon] Lv.2 for 84 gold. Gold left: 36"));
     }
 
     @Test

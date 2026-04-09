@@ -1,6 +1,7 @@
 package com.ethan.byztine.controller;
 
 import com.ethan.byztine.application.ExecuteEventService;
+import com.ethan.byztine.application.ShopService;
 import com.ethan.byztine.application.UserService;
 import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.combat.CombatReport;
@@ -39,17 +40,20 @@ public class DebugApiController {
     private final UserRepository userRepository;
     private final UserService userService;
     private final ExecuteEventService executeEventService;
+    private final ShopService shopService;
     private final CombatEngine combatEngine;
 
     public DebugApiController(
             UserRepository userRepository,
             UserService userService,
             ExecuteEventService executeEventService,
+            ShopService shopService,
             CombatEngine combatEngine) {
 
         this.userRepository = userRepository;
         this.userService = userService;
         this.executeEventService = executeEventService;
+        this.shopService = shopService;
         this.combatEngine = combatEngine;
     }
 
@@ -258,6 +262,57 @@ public class DebugApiController {
             userRepository.save(user);
 
             return "Unequipped slot: " + equipmentSlot.getDisplayName();
+        });
+    }
+
+    @GetMapping("/shop-offers")
+    public ResponseEntity<?> getShopOffers(
+            @RequestParam String email,
+            @RequestParam(required = false) Integer level) {
+
+        try {
+            ShopService.ShopCatalog catalog = shopService.getCommonOffers(email, level);
+
+            return ResponseEntity.ok(new ShopCatalogResponse(
+                    catalog.characterLevel(),
+                    catalog.selectedLevel(),
+                    catalog.gold(),
+                    catalog.offers().stream()
+                            .map(offer -> new ShopOfferResponse(
+                                    offer.presetId(),
+                                    offer.name(),
+                                    offer.slot(),
+                                    offer.slotDisplayName(),
+                                    offer.level(),
+                                    offer.price(),
+                                    offer.goldValue(),
+                                    offer.strengthBonus(),
+                                    offer.intelligenceBonus(),
+                                    offer.agilityBonus(),
+                                    offer.luckBonus(),
+                                    offer.weaponDamage(),
+                                    offer.armor(),
+                                    offer.affordable(),
+                                    offer.bonusSummary()))
+                            .toList()));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/buy-item")
+    public String buyItem(
+            @RequestParam String email,
+            @RequestParam String preset,
+            @RequestParam int level) {
+
+        return handleRequest(() -> {
+            ShopService.ShopPurchase purchase = shopService.buyCommonItem(email, preset, level);
+
+            return "Purchased item: " + purchase.itemName() + " ["
+                    + purchase.slotDisplayName() + "] Lv." + purchase.itemLevel()
+                    + " for " + purchase.price() + " gold. Gold left: "
+                    + purchase.goldRemaining();
         });
     }
 
@@ -709,6 +764,31 @@ public class DebugApiController {
             int luckBonus,
             int weaponDamage,
             int armor,
+            String bonusSummary) {
+    }
+
+    private record ShopCatalogResponse(
+            int characterLevel,
+            int selectedLevel,
+            int gold,
+            List<ShopOfferResponse> offers) {
+    }
+
+    private record ShopOfferResponse(
+            String presetId,
+            String name,
+            String slot,
+            String slotDisplayName,
+            int level,
+            int price,
+            int goldValue,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor,
+            boolean affordable,
             String bonusSummary) {
     }
 }

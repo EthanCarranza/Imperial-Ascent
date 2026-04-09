@@ -30,6 +30,7 @@
             <a href="#lookup-section">Registro</a>
             <a href="#profile-section">Ficha</a>
             <a href="#armory-section">Armeria</a>
+            <a href="#shop-section">Tienda</a>
             <a href="#command-section">Comandos</a>
             <a href="#console-section">Consola</a>
           </nav>
@@ -142,6 +143,7 @@
             <div class="highlight-row">
               <div class="highlight-pill">Auto-fill del activo</div>
               <div class="highlight-pill">Inventario visible</div>
+              <div class="highlight-pill">Shop common-only</div>
               <div class="highlight-pill">Consola persistente</div>
               <div class="highlight-pill">Alpha responsive</div>
             </div>
@@ -241,6 +243,32 @@
                 <button class="full-span" type="submit">Fight Preset</button>
               </form>
               <div class="preset-row"><span>Recruit</span><span>Skirmisher</span><span>Brute</span><span>Duelist</span><span>Gambler</span><span>Veteran</span></div>
+            </article>
+
+            <article class="frame-card tool-card" id="shop-section">
+              <div class="card-head">
+                <p class="eyebrow">Shop</p>
+                <h3>Vendor stock comun</h3>
+                <p class="muted">La tienda solo vende equipo comun del nivel seleccionado, nunca por encima del nivel del personaje.</p>
+              </div>
+              <div class="shop-toolbar">
+                <div class="shop-rule-row">
+                  <span class="shop-rule">Common only</span>
+                  <span class="shop-rule" id="shopLevelCap">Level cap --</span>
+                </div>
+                <label class="field shop-level-field">
+                  <span>Offer level</span>
+                  <select id="shopLevelSelect" disabled>
+                    <option value="">Load a character</option>
+                  </select>
+                </label>
+              </div>
+              <div class="shop-summary">
+                <span id="shopSummary">Carga un personaje para ver la tienda.</span>
+                <strong id="shopGoldStatus">Gold --</strong>
+              </div>
+              <div class="shop-grid" id="shopGrid" aria-label="Ofertas de la tienda"></div>
+              <p class="muted">Aqui compraremos gear base. Lo realmente potente quedara para drops y dungeons cuando llegue la rareza.</p>
             </article>
 
             <article class="frame-card tool-card">

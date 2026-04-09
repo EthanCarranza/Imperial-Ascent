@@ -143,6 +143,22 @@ class CombatBalanceReportTest {
                 baseSpec,
                 BASE_SEED);
 
+        MatchupReport fullGearLevelFiveVsFullGearLevelOneOmniTen = simulateMatchup(
+                "Full Gear Lv5 vs Full Gear Lv1 + ALL +10",
+                baseSpec,
+                new FighterSpec("Omni Ten Gear", 1, 15, 15, 15, 15),
+                BASE_SEED,
+                fullBasicGearLevelFive,
+                fullBasicGearLevelOne);
+
+        MatchupReport fullGearLevelFiveVsFullGearLevelOneOmniTwenty = simulateMatchup(
+                "Full Gear Lv5 vs Full Gear Lv1 + ALL +20",
+                baseSpec,
+                new FighterSpec("Omni Twenty Gear", 1, 25, 25, 25, 25),
+                BASE_SEED,
+                fullBasicGearLevelFive,
+                fullBasicGearLevelOne);
+
         MatchupReport baseVsRecruit = simulateMatchup(
                 "Base vs Recruit",
                 baseSpec,
@@ -231,7 +247,9 @@ class CombatBalanceReportTest {
                 strongNakedVsFullGear,
                 strongNakedVsFullGearLevelFive,
                 allStatsPlus10VsBase,
-                allStatsPlus20VsBase));
+                allStatsPlus20VsBase,
+                fullGearLevelFiveVsFullGearLevelOneOmniTen,
+                fullGearLevelFiveVsFullGearLevelOneOmniTwenty));
         printReports("Preset Matchups", List.of(
                 baseVsRecruit,
                 baseVsSkirmisher,
@@ -265,6 +283,8 @@ class CombatBalanceReportTest {
         assertTrue(allStatsPlus10VsBase.leftWinRate() > luckVsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > allStatsPlus10VsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > 0.90);
+        assertTrue(fullGearLevelFiveVsFullGearLevelOneOmniTen.leftWinRate() > 0.50);
+        assertTrue(fullGearLevelFiveVsFullGearLevelOneOmniTwenty.rightWinRate() > 0.50);
         assertTrue(baseVsRecruit.leftWinRate() > 0.45 && baseVsRecruit.leftWinRate() < 0.55);
         assertTrue(baseVsSkirmisher.rightWinRate() > baseVsRecruit.rightWinRate());
         assertTrue(baseVsVeteran.rightWinRate() > 0.60);
