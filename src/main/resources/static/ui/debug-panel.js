@@ -1,11 +1,11 @@
 const state = { activeEmail: null, activeName: null };
 const defaultEquipmentSlots = [
-  { slot: "weapon", displayName: "Weapon", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
-  { slot: "armor", displayName: "Armor", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
-  { slot: "accessory", displayName: "Accessory", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
-  { slot: "helm", displayName: "Helm", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
-  { slot: "ring", displayName: "Ring", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
-  { slot: "relic", displayName: "Relic", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "weapon", displayName: "Weapon", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "armor", displayName: "Armor", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "accessory", displayName: "Accessory", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "helm", displayName: "Helm", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "ring", displayName: "Ring", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "relic", displayName: "Relic", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
 ];
 
 const getById = (id) => document.getElementById(id);
@@ -126,6 +126,10 @@ function createSlotCard(slot) {
   const title = document.createElement("strong");
   title.textContent = slot.itemName ?? "Empty";
 
+  const level = document.createElement("small");
+  level.className = "slot-card__level";
+  level.textContent = slot.itemName ? `Lv. ${slot.level}` : "No item";
+
   const combat = document.createElement("small");
   combat.className = "slot-card__combat";
   combat.textContent = formatCombatSummary(slot);
@@ -134,7 +138,7 @@ function createSlotCard(slot) {
   bonus.className = "slot-card__bonus";
   bonus.textContent = formatStatSummary(slot);
 
-  card.append(slotLabel, title, combat, bonus);
+  card.append(slotLabel, title, level, combat, bonus);
 
   if (slot.itemName) {
     const button = document.createElement("button");
@@ -172,6 +176,10 @@ function createInventoryItemCell(item) {
   title.className = "inventory-item__name";
   title.textContent = item.name;
 
+  const level = document.createElement("div");
+  level.className = "inventory-item__level";
+  level.textContent = `Lv. ${item.level}`;
+
   const bonus = document.createElement("div");
   bonus.className = "inventory-item__bonus";
   bonus.textContent = formatStatSummary(item);
@@ -184,7 +192,7 @@ function createInventoryItemCell(item) {
   value.className = "inventory-item__value";
   value.textContent = `${item.goldValue} gold value`;
 
-  cell.append(slot, title, combat, bonus, value);
+  cell.append(slot, title, level, combat, bonus, value);
 
   if (item.equipped) {
     const status = document.createElement("div");

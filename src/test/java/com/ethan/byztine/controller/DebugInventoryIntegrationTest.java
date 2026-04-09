@@ -44,7 +44,9 @@ class DebugInventoryIntegrationTest {
                 .andExpect(jsonPath("$.inventoryUsage").value(1))
                 .andExpect(jsonPath("$.weaponDamageBonus").value(2))
                 .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.equipmentSlots[0].level").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].weaponDamage").value(2))
-                .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"));
+                .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"))
+                .andExpect(jsonPath("$.inventoryItems[0].level").value(1));
     }
 }

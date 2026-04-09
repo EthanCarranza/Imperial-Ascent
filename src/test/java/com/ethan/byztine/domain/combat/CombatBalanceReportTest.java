@@ -21,15 +21,24 @@ class CombatBalanceReportTest {
 
     @Test
     void shouldProduceDeterministicBalanceSnapshot() {
-        ItemPreset[] noItems = new ItemPreset[0];
-        ItemPreset[] swordOnly = { ItemPreset.TRAINING_SWORD };
-        ItemPreset[] fullBasicGear = {
-                ItemPreset.TRAINING_SWORD,
-                ItemPreset.LAMELLAR_ARMOR,
-                ItemPreset.CAVALRY_CLASP,
-                ItemPreset.TAGMATIC_HELM,
-                ItemPreset.PORPHYRY_RING,
-                ItemPreset.IMPERIAL_ICON
+        ItemLoadout[] noItems = new ItemLoadout[0];
+        ItemLoadout[] swordLevelOne = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 1) };
+        ItemLoadout[] swordLevelFive = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 5) };
+        ItemLoadout[] fullBasicGearLevelOne = {
+                new ItemLoadout(ItemPreset.TRAINING_SWORD, 1),
+                new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 1),
+                new ItemLoadout(ItemPreset.CAVALRY_CLASP, 1),
+                new ItemLoadout(ItemPreset.TAGMATIC_HELM, 1),
+                new ItemLoadout(ItemPreset.PORPHYRY_RING, 1),
+                new ItemLoadout(ItemPreset.IMPERIAL_ICON, 1)
+        };
+        ItemLoadout[] fullBasicGearLevelFive = {
+                new ItemLoadout(ItemPreset.TRAINING_SWORD, 5),
+                new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 5),
+                new ItemLoadout(ItemPreset.CAVALRY_CLASP, 5),
+                new ItemLoadout(ItemPreset.TAGMATIC_HELM, 5),
+                new ItemLoadout(ItemPreset.PORPHYRY_RING, 5),
+                new ItemLoadout(ItemPreset.IMPERIAL_ICON, 5)
         };
 
         FighterSpec baseSpec = new FighterSpec("Base", 1, 5, 5, 5, 5);
@@ -75,28 +84,52 @@ class CombatBalanceReportTest {
                 BASE_SEED);
 
         MatchupReport swordVsBase = simulateMatchup(
-                "Base + Sword vs Base",
+                "Base + Sword Lv1 vs Base",
                 baseSpec,
                 baseSpec,
                 BASE_SEED,
-                swordOnly,
+                swordLevelOne,
+                noItems);
+
+        MatchupReport swordLevelFiveVsBase = simulateMatchup(
+                "Base + Sword Lv5 vs Base",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                swordLevelFive,
                 noItems);
 
         MatchupReport fullGearVsBase = simulateMatchup(
-                "Base + Full Gear vs Base",
+                "Base + Full Gear Lv1 vs Base",
                 baseSpec,
                 baseSpec,
                 BASE_SEED,
-                fullBasicGear,
+                fullBasicGearLevelOne,
+                noItems);
+
+        MatchupReport fullGearLevelFiveVsBase = simulateMatchup(
+                "Base + Full Gear Lv5 vs Base",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                fullBasicGearLevelFive,
                 noItems);
 
         MatchupReport strongNakedVsFullGear = simulateMatchup(
-                "STR +6 Naked vs Full Gear",
+                "STR +6 Naked vs Full Gear Lv1",
                 new FighterSpec("Strong Naked", 1, 11, 5, 5, 5),
                 baseSpec,
                 BASE_SEED,
                 noItems,
-                fullBasicGear);
+                fullBasicGearLevelOne);
+
+        MatchupReport strongNakedVsFullGearLevelFive = simulateMatchup(
+                "STR +6 Naked vs Full Gear Lv5",
+                new FighterSpec("Strong Naked", 1, 11, 5, 5, 5),
+                baseSpec,
+                BASE_SEED,
+                noItems,
+                fullBasicGearLevelFive);
 
         MatchupReport allStatsPlus10VsBase = simulateMatchup(
                 "ALL +10 vs Base",
@@ -192,8 +225,11 @@ class CombatBalanceReportTest {
                 intelligenceVsBase,
                 luckVsBase,
                 swordVsBase,
+                swordLevelFiveVsBase,
                 fullGearVsBase,
+                fullGearLevelFiveVsBase,
                 strongNakedVsFullGear,
+                strongNakedVsFullGearLevelFive,
                 allStatsPlus10VsBase,
                 allStatsPlus20VsBase));
         printReports("Preset Matchups", List.of(
@@ -220,7 +256,12 @@ class CombatBalanceReportTest {
         assertTrue(luckVsBase.leftWinRate() > baseVsBase.leftWinRate());
         assertTrue(luckVsBase.leftWinRate() < 0.70);
         assertTrue(swordVsBase.leftWinRate() > baseVsBase.leftWinRate());
+        assertTrue(swordLevelFiveVsBase.leftWinRate() > swordVsBase.leftWinRate());
         assertTrue(fullGearVsBase.leftWinRate() > swordVsBase.leftWinRate());
+        assertTrue(fullGearLevelFiveVsBase.leftWinRate() > fullGearVsBase.leftWinRate());
+        assertTrue(strongNakedVsFullGear.leftWinRate() > 0.05);
+        assertTrue(strongNakedVsFullGear.leftWinRate() < 0.50);
+        assertTrue(strongNakedVsFullGearLevelFive.leftWinRate() < strongNakedVsFullGear.leftWinRate());
         assertTrue(allStatsPlus10VsBase.leftWinRate() > luckVsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > allStatsPlus10VsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > 0.90);
@@ -244,7 +285,7 @@ class CombatBalanceReportTest {
             FighterSpec left,
             FighterSpec right,
             long seed) {
-        return simulateMatchup(label, left, right, seed, new ItemPreset[0], new ItemPreset[0]);
+        return simulateMatchup(label, left, right, seed, new ItemLoadout[0], new ItemLoadout[0]);
     }
 
     private MatchupReport simulateMatchup(
@@ -252,8 +293,8 @@ class CombatBalanceReportTest {
             FighterSpec left,
             FighterSpec right,
             long seed,
-            ItemPreset[] leftItems,
-            ItemPreset[] rightItems) {
+            ItemLoadout[] leftItems,
+            ItemLoadout[] rightItems) {
 
         SeriesReport leftAttacking = simulateSeries(left, right, seed, leftItems, rightItems);
         SeriesReport rightAttacking = simulateSeries(right, left, seed + 1, rightItems, leftItems);
@@ -279,8 +320,8 @@ class CombatBalanceReportTest {
             FighterSpec attacker,
             FighterSpec defender,
             long seed,
-            ItemPreset[] attackerItems,
-            ItemPreset[] defenderItems) {
+            ItemLoadout[] attackerItems,
+            ItemLoadout[] defenderItems) {
 
         CombatEngine engine = new CombatEngine(
                 new DefaultDamageCalculator(new SeededRandomProvider(seed)));
@@ -362,11 +403,11 @@ class CombatBalanceReportTest {
         return character;
     }
 
-    private Character buildCharacter(FighterSpec spec, ItemPreset... itemPresets) {
+    private Character buildCharacter(FighterSpec spec, ItemLoadout... itemPresets) {
         Character character = buildCharacter(spec);
 
-        for (ItemPreset itemPreset : itemPresets) {
-            InventoryItem item = InventoryItem.fromPreset(itemPreset);
+        for (ItemLoadout itemPreset : itemPresets) {
+            InventoryItem item = InventoryItem.fromPreset(itemPreset.preset(), itemPreset.level());
             character.addItem(item);
             character.equipItem(item.getId());
         }
@@ -475,6 +516,11 @@ class CombatBalanceReportTest {
             int intelligence,
             int agility,
             int luck) {
+    }
+
+    private record ItemLoadout(
+            ItemPreset preset,
+            int level) {
     }
 
     private record SeriesReport(

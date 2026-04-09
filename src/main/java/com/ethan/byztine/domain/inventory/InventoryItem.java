@@ -26,6 +26,9 @@ public class InventoryItem {
     private EquipmentSlot slot;
 
     @Column(nullable = false)
+    private int level;
+
+    @Column(nullable = false)
     private int goldValue;
 
     @Column(nullable = false)
@@ -60,12 +63,26 @@ public class InventoryItem {
             int intelligenceBonus,
             int agilityBonus,
             int luckBonus) {
-        this(name, slot, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, 0, 0);
+        this(name, slot, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, 0, 0);
     }
 
     public InventoryItem(
             String name,
             EquipmentSlot slot,
+            int goldValue,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
+        this(name, slot, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, weaponDamage, armor);
+    }
+
+    private InventoryItem(
+            String name,
+            EquipmentSlot slot,
+            int level,
             int goldValue,
             int strengthBonus,
             int intelligenceBonus,
@@ -82,12 +99,17 @@ public class InventoryItem {
             throw new IllegalArgumentException("Item slot cannot be null");
         }
 
+        if (level < 1) {
+            throw new IllegalArgumentException("Item level must be at least 1");
+        }
+
         if (goldValue < 0) {
             throw new IllegalArgumentException("Item gold value cannot be negative");
         }
 
         this.name = name;
         this.slot = slot;
+        this.level = level;
         this.goldValue = goldValue;
         this.id = UUID.randomUUID();
         this.strengthBonus = requireNonNegativeBonus(strengthBonus, "Strength");
@@ -99,21 +121,48 @@ public class InventoryItem {
         this.equipped = false;
     }
 
+    public static InventoryItem scaled(
+            String name,
+            EquipmentSlot slot,
+            int level,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
+
+        return new InventoryItem(
+                name,
+                slot,
+                level,
+                ItemValueCalculator.calculateGoldValue(
+                        slot,
+                        level,
+                        strengthBonus,
+                        intelligenceBonus,
+                        agilityBonus,
+                        luckBonus,
+                        weaponDamage,
+                        armor),
+                strengthBonus,
+                intelligenceBonus,
+                agilityBonus,
+                luckBonus,
+                weaponDamage,
+                armor);
+    }
+
     public static InventoryItem fromPreset(ItemPreset preset) {
+        return fromPreset(preset, 1);
+    }
+
+    public static InventoryItem fromPreset(ItemPreset preset, int level) {
         if (preset == null) {
             throw new IllegalArgumentException("Item preset cannot be null");
         }
 
-        return new InventoryItem(
-                preset.getDisplayName(),
-                preset.getSlot(),
-                preset.getGoldValue(),
-                preset.getStrengthBonus(),
-                preset.getIntelligenceBonus(),
-                preset.getAgilityBonus(),
-                preset.getLuckBonus(),
-                preset.getWeaponDamage(),
-                preset.getArmor());
+        return preset.toItem(level);
     }
 
     public UUID getId() {
@@ -126,6 +175,10 @@ public class InventoryItem {
 
     public EquipmentSlot getSlot() {
         return slot;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     public int getGoldValue() {

@@ -164,18 +164,22 @@ public class DebugApiController {
 
     @PostMapping("/add-item-preset")
     public String addItemPreset(@RequestParam String email,
-            @RequestParam String preset) {
+            @RequestParam String preset,
+            @RequestParam(defaultValue = "1") int level) {
 
         return handleRequest(() -> {
             User user = requireUserByEmail(email, "User");
             Character character = requireCharacter(user, "User");
             ItemPreset itemPreset = ItemPreset.fromId(preset);
-            InventoryItem item = InventoryItem.fromPreset(itemPreset);
+            requireMinimumOne(level, "Item level");
+            InventoryItem item = InventoryItem.fromPreset(itemPreset, level);
 
             character.addItem(item);
             userRepository.save(user);
 
-            return "Granted item: " + item.getName() + " [" + item.getSlot().getDisplayName() + "]";
+            return "Granted item: " + item.getName() + " ["
+                    + item.getSlot().getDisplayName() + "] Lv." + item.getLevel()
+                    + " value " + item.getGoldValue();
         });
     }
 
@@ -184,7 +188,7 @@ public class DebugApiController {
             @RequestParam String email,
             @RequestParam String name,
             @RequestParam String slot,
-            @RequestParam(defaultValue = "0") int goldValue,
+            @RequestParam(defaultValue = "1") int level,
             @RequestParam(defaultValue = "0") int strengthBonus,
             @RequestParam(defaultValue = "0") int intelligenceBonus,
             @RequestParam(defaultValue = "0") int agilityBonus,
@@ -197,7 +201,7 @@ public class DebugApiController {
             Character character = requireCharacter(user, "User");
             EquipmentSlot equipmentSlot = EquipmentSlot.fromId(slot);
 
-            requireNonNegativeAmount(goldValue, "Gold value");
+            requireMinimumOne(level, "Item level");
             requireNonNegativeAmount(strengthBonus, "Strength bonus");
             requireNonNegativeAmount(intelligenceBonus, "Intelligence bonus");
             requireNonNegativeAmount(agilityBonus, "Agility bonus");
@@ -205,10 +209,10 @@ public class DebugApiController {
             requireNonNegativeAmount(weaponDamage, "Weapon damage");
             requireNonNegativeAmount(armor, "Armor");
 
-            InventoryItem item = new InventoryItem(
+            InventoryItem item = InventoryItem.scaled(
                     name,
                     equipmentSlot,
-                    goldValue,
+                    level,
                     strengthBonus,
                     intelligenceBonus,
                     agilityBonus,
@@ -220,7 +224,8 @@ public class DebugApiController {
             userRepository.save(user);
 
             return "Created item: " + item.getName() + " ["
-                    + item.getSlot().getDisplayName() + "] value " + item.getGoldValue();
+                    + item.getSlot().getDisplayName() + "] Lv." + item.getLevel()
+                    + " value " + item.getGoldValue();
         });
     }
 
@@ -425,6 +430,12 @@ public class DebugApiController {
         }
     }
 
+    private void requireMinimumOne(int amount, String label) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException(label + " must be positive");
+        }
+    }
+
     private void requireNonNegativeAmount(int amount, String label) {
         if (amount < 0) {
             throw new IllegalArgumentException(label + " cannot be negative");
@@ -476,6 +487,7 @@ public class DebugApiController {
                                 0,
                                 0,
                                 0,
+                                0,
                                 "Empty");
                     }
 
@@ -484,6 +496,7 @@ public class DebugApiController {
                             slot.getDisplayName(),
                             item.getId() == null ? null : item.getId().toString(),
                             item.getName(),
+                            item.getLevel(),
                             item.getStrengthBonus(),
                             item.getIntelligenceBonus(),
                             item.getAgilityBonus(),
@@ -502,6 +515,7 @@ public class DebugApiController {
                         item.getName(),
                         item.getSlot().getId(),
                         item.getSlot().getDisplayName(),
+                        item.getLevel(),
                         item.isEquipped(),
                         item.getGoldValue(),
                         item.getStrengthBonus(),
@@ -671,6 +685,7 @@ public class DebugApiController {
             String displayName,
             String itemId,
             String itemName,
+            int level,
             int strengthBonus,
             int intelligenceBonus,
             int agilityBonus,
@@ -685,6 +700,7 @@ public class DebugApiController {
             String name,
             String slot,
             String slotDisplayName,
+            int level,
             boolean equipped,
             int goldValue,
             int strengthBonus,

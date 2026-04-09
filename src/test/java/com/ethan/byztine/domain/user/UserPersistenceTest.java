@@ -79,6 +79,7 @@ class UserPersistenceTest {
         assertTrue(retrieved.isPresent());
         assertEquals(1, retrieved.get().getCharacter().getInventoryUsage());
         assertEquals(7, retrieved.get().getCharacter().getEffectiveStrength());
+        assertEquals(1, retrieved.get().getCharacter().getInventoryItems().get(0).getLevel());
         assertEquals(2, retrieved.get().getCharacter().getWeaponDamageFromEquipment());
         assertTrue(retrieved.get().getCharacter().getEquippedItem(EquipmentSlot.WEAPON).isPresent());
     }

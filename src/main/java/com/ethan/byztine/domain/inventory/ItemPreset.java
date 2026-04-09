@@ -3,17 +3,16 @@ package com.ethan.byztine.domain.inventory;
 import java.util.Locale;
 
 public enum ItemPreset {
-    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 45, 0, 0, 0, 0, 2, 0),
-    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 70, 0, 0, 0, 0, 0, 1),
-    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 55, 0, 0, 1, 0, 0, 0),
-    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 50, 0, 0, 0, 0, 0, 1),
-    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 80, 0, 1, 0, 0, 0, 0),
-    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 95, 0, 0, 0, 1, 0, 0);
+    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 0, 0, 0, 0, 2, 0),
+    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 0, 0, 0, 0, 0, 1),
+    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 0, 0, 1, 0, 0, 0),
+    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 0, 0, 0, 0, 0, 1),
+    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 0, 1, 0, 0, 0, 0),
+    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 0, 0, 0, 1, 0, 0);
 
     private final String id;
     private final String displayName;
     private final EquipmentSlot slot;
-    private final int goldValue;
     private final int strengthBonus;
     private final int intelligenceBonus;
     private final int agilityBonus;
@@ -25,7 +24,6 @@ public enum ItemPreset {
             String id,
             String displayName,
             EquipmentSlot slot,
-            int goldValue,
             int strengthBonus,
             int intelligenceBonus,
             int agilityBonus,
@@ -36,7 +34,6 @@ public enum ItemPreset {
         this.id = id;
         this.displayName = displayName;
         this.slot = slot;
-        this.goldValue = goldValue;
         this.strengthBonus = strengthBonus;
         this.intelligenceBonus = intelligenceBonus;
         this.agilityBonus = agilityBonus;
@@ -55,10 +52,6 @@ public enum ItemPreset {
 
     public EquipmentSlot getSlot() {
         return slot;
-    }
-
-    public int getGoldValue() {
-        return goldValue;
     }
 
     public int getStrengthBonus() {
@@ -83,6 +76,31 @@ public enum ItemPreset {
 
     public int getArmor() {
         return armor;
+    }
+
+    public InventoryItem toItem(int level) {
+        return InventoryItem.scaled(
+                displayName,
+                slot,
+                level,
+                scaleValue(strengthBonus, level),
+                scaleValue(intelligenceBonus, level),
+                scaleValue(agilityBonus, level),
+                scaleValue(luckBonus, level),
+                scaleValue(weaponDamage, level),
+                scaleValue(armor, level));
+    }
+
+    private int scaleValue(int baseValue, int level) {
+        if (level < 1) {
+            throw new IllegalArgumentException("Item level must be at least 1");
+        }
+
+        if (baseValue == 0) {
+            return 0;
+        }
+
+        return baseValue + (((level - 1) * baseValue) / 2);
     }
 
     public static ItemPreset fromId(String value) {

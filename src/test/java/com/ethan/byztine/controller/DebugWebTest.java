@@ -12,6 +12,7 @@ import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
+import com.ethan.byztine.domain.inventory.ItemValueCalculator;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -191,8 +192,10 @@ class DebugWebTest {
                 .andExpect(jsonPath("$.inventoryUsage").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].displayName").value("Weapon"))
                 .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.equipmentSlots[0].level").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"))
+                .andExpect(jsonPath("$.inventoryItems[0].level").value(1))
                 .andExpect(jsonPath("$.inventoryItems[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.luck").value(5));
     }
@@ -201,14 +204,27 @@ class DebugWebTest {
     void addItemPresetEndpointShouldGrantItemAndPersistUser() throws Exception {
         User user = createUserWithCharacter();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        int expectedValue = ItemValueCalculator.calculateGoldValue(
+                EquipmentSlot.WEAPON,
+                3,
+                0,
+                0,
+                0,
+                0,
+                4,
+                0);
 
         mockMvc.perform(post("/api/debug/add-item-preset")
                 .param("email", user.getEmail())
-                .param("preset", "training-sword"))
+                .param("preset", "training-sword")
+                .param("level", "3"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Granted item: Training Sword [Weapon]"));
+                .andExpect(content().string("Granted item: Training Sword [Weapon] Lv.3 value " + expectedValue));
 
         assertEquals(1, user.getCharacter().getInventoryUsage());
+        InventoryItem item = user.getCharacter().getInventoryItems().get(0);
+        assertEquals(3, item.getLevel());
+        assertEquals(4, item.getWeaponDamage());
         verify(userRepository).save(user);
     }
 
@@ -216,21 +232,31 @@ class DebugWebTest {
     void createItemEndpointShouldGrantCustomItemAndPersistUser() throws Exception {
         User user = createUserWithCharacter();
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        int expectedValue = ItemValueCalculator.calculateGoldValue(
+                EquipmentSlot.WEAPON,
+                3,
+                1,
+                0,
+                0,
+                0,
+                3,
+                0);
 
         mockMvc.perform(post("/api/debug/create-item")
                 .param("email", user.getEmail())
                 .param("name", "Bronze Spear")
                 .param("slot", "weapon")
-                .param("goldValue", "65")
+                .param("level", "3")
                 .param("weaponDamage", "3")
                 .param("strengthBonus", "1"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Created item: Bronze Spear [Weapon] value 65"));
+                .andExpect(content().string("Created item: Bronze Spear [Weapon] Lv.3 value " + expectedValue));
 
         assertEquals(1, user.getCharacter().getInventoryUsage());
         InventoryItem item = user.getCharacter().getInventoryItems().get(0);
         assertEquals("Bronze Spear", item.getName());
-        assertEquals(65, item.getGoldValue());
+        assertEquals(3, item.getLevel());
+        assertEquals(expectedValue, item.getGoldValue());
         assertEquals(3, item.getWeaponDamage());
         assertEquals(1, item.getStrengthBonus());
         verify(userRepository).save(user);

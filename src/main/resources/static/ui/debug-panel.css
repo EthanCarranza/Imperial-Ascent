@@ -478,6 +478,11 @@ button:active { transform: translateY(1px); }
   line-height: 1.35;
 }
 
+.slot-card__level {
+  color: rgba(110, 72, 126, 0.9);
+  font-weight: 700;
+}
+
 .slot-card__combat {
   color: #6a3a73;
   font-weight: 700;
@@ -560,6 +565,12 @@ button:active { transform: translateY(1px); }
   font-size: 0.92rem;
   line-height: 1.2;
   word-break: break-word;
+}
+
+.inventory-item__level {
+  color: rgba(209, 182, 220, 0.88);
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 
 .inventory-item__bonus {
