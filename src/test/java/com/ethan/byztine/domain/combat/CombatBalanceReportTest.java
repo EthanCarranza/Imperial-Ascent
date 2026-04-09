@@ -4,6 +4,8 @@ import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.event.CombatEvent;
 import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
+import com.ethan.byztine.domain.inventory.InventoryItem;
+import com.ethan.byztine.domain.inventory.ItemPreset;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +21,17 @@ class CombatBalanceReportTest {
 
     @Test
     void shouldProduceDeterministicBalanceSnapshot() {
+        ItemPreset[] noItems = new ItemPreset[0];
+        ItemPreset[] swordOnly = { ItemPreset.TRAINING_SWORD };
+        ItemPreset[] fullBasicGear = {
+                ItemPreset.TRAINING_SWORD,
+                ItemPreset.LAMELLAR_ARMOR,
+                ItemPreset.CAVALRY_CLASP,
+                ItemPreset.TAGMATIC_HELM,
+                ItemPreset.PORPHYRY_RING,
+                ItemPreset.IMPERIAL_ICON
+        };
+
         FighterSpec baseSpec = new FighterSpec("Base", 1, 5, 5, 5, 5);
         FighterSpec recruitSpec = fromPreset(EnemyPreset.RECRUIT);
         FighterSpec skirmisherSpec = fromPreset(EnemyPreset.SKIRMISHER);
@@ -60,6 +73,30 @@ class CombatBalanceReportTest {
                 luckSpec,
                 baseSpec,
                 BASE_SEED);
+
+        MatchupReport swordVsBase = simulateMatchup(
+                "Base + Sword vs Base",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                swordOnly,
+                noItems);
+
+        MatchupReport fullGearVsBase = simulateMatchup(
+                "Base + Full Gear vs Base",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                fullBasicGear,
+                noItems);
+
+        MatchupReport strongNakedVsFullGear = simulateMatchup(
+                "STR +6 Naked vs Full Gear",
+                new FighterSpec("Strong Naked", 1, 11, 5, 5, 5),
+                baseSpec,
+                BASE_SEED,
+                noItems,
+                fullBasicGear);
 
         MatchupReport allStatsPlus10VsBase = simulateMatchup(
                 "ALL +10 vs Base",
@@ -154,6 +191,9 @@ class CombatBalanceReportTest {
                 agilityVsBase,
                 intelligenceVsBase,
                 luckVsBase,
+                swordVsBase,
+                fullGearVsBase,
+                strongNakedVsFullGear,
                 allStatsPlus10VsBase,
                 allStatsPlus20VsBase));
         printReports("Preset Matchups", List.of(
@@ -179,6 +219,8 @@ class CombatBalanceReportTest {
         assertEquals(baseVsBase.leftWinRate(), intelligenceVsBase.leftWinRate());
         assertTrue(luckVsBase.leftWinRate() > baseVsBase.leftWinRate());
         assertTrue(luckVsBase.leftWinRate() < 0.70);
+        assertTrue(swordVsBase.leftWinRate() > baseVsBase.leftWinRate());
+        assertTrue(fullGearVsBase.leftWinRate() > swordVsBase.leftWinRate());
         assertTrue(allStatsPlus10VsBase.leftWinRate() > luckVsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > allStatsPlus10VsBase.leftWinRate());
         assertTrue(allStatsPlus20VsBase.leftWinRate() > 0.90);
@@ -202,9 +244,19 @@ class CombatBalanceReportTest {
             FighterSpec left,
             FighterSpec right,
             long seed) {
+        return simulateMatchup(label, left, right, seed, new ItemPreset[0], new ItemPreset[0]);
+    }
 
-        SeriesReport leftAttacking = simulateSeries(left, right, seed);
-        SeriesReport rightAttacking = simulateSeries(right, left, seed + 1);
+    private MatchupReport simulateMatchup(
+            String label,
+            FighterSpec left,
+            FighterSpec right,
+            long seed,
+            ItemPreset[] leftItems,
+            ItemPreset[] rightItems) {
+
+        SeriesReport leftAttacking = simulateSeries(left, right, seed, leftItems, rightItems);
+        SeriesReport rightAttacking = simulateSeries(right, left, seed + 1, rightItems, leftItems);
 
         int totalFights = leftAttacking.totalFights() + rightAttacking.totalFights();
         int draws = leftAttacking.draws() + rightAttacking.draws();
@@ -223,7 +275,13 @@ class CombatBalanceReportTest {
                 averageRounds);
     }
 
-    private SeriesReport simulateSeries(FighterSpec attacker, FighterSpec defender, long seed) {
+    private SeriesReport simulateSeries(
+            FighterSpec attacker,
+            FighterSpec defender,
+            long seed,
+            ItemPreset[] attackerItems,
+            ItemPreset[] defenderItems) {
+
         CombatEngine engine = new CombatEngine(
                 new DefaultDamageCalculator(new SeededRandomProvider(seed)));
 
@@ -233,8 +291,8 @@ class CombatBalanceReportTest {
         int totalRounds = 0;
 
         for (int i = 0; i < FIGHTS_PER_SIDE; i++) {
-            Combatant attackerCombatant = CombatantFactory.fromCharacter(buildCharacter(attacker));
-            Combatant defenderCombatant = CombatantFactory.fromCharacter(buildCharacter(defender));
+            Combatant attackerCombatant = CombatantFactory.fromCharacter(buildCharacter(attacker, attackerItems));
+            Combatant defenderCombatant = CombatantFactory.fromCharacter(buildCharacter(defender, defenderItems));
 
             CombatResult result = engine.fight(attackerCombatant, defenderCombatant);
             totalRounds += result.getRounds();
@@ -301,6 +359,18 @@ class CombatBalanceReportTest {
         increaseStat(character, spec.intelligence(), StatType.INTELLIGENCE);
         increaseStat(character, spec.agility(), StatType.AGILITY);
         increaseStat(character, spec.luck(), StatType.LUCK);
+        return character;
+    }
+
+    private Character buildCharacter(FighterSpec spec, ItemPreset... itemPresets) {
+        Character character = buildCharacter(spec);
+
+        for (ItemPreset itemPreset : itemPresets) {
+            InventoryItem item = InventoryItem.fromPreset(itemPreset);
+            character.addItem(item);
+            character.equipItem(item.getId());
+        }
+
         return character;
     }
 

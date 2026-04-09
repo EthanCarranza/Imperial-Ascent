@@ -1,11 +1,11 @@
 const state = { activeEmail: null, activeName: null };
 const defaultEquipmentSlots = [
-  { slot: "weapon", displayName: "Weapon", itemName: null, bonusSummary: "Empty" },
-  { slot: "armor", displayName: "Armor", itemName: null, bonusSummary: "Empty" },
-  { slot: "accessory", displayName: "Accessory", itemName: null, bonusSummary: "Empty" },
-  { slot: "helm", displayName: "Helm", itemName: null, bonusSummary: "Empty" },
-  { slot: "ring", displayName: "Ring", itemName: null, bonusSummary: "Empty" },
-  { slot: "relic", displayName: "Relic", itemName: null, bonusSummary: "Empty" },
+  { slot: "weapon", displayName: "Weapon", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "armor", displayName: "Armor", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "accessory", displayName: "Accessory", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "helm", displayName: "Helm", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "ring", displayName: "Ring", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
+  { slot: "relic", displayName: "Relic", itemName: null, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
 ];
 
 const getById = (id) => document.getElementById(id);
@@ -48,6 +48,31 @@ const initials = (name) => {
     .join("");
 };
 
+const formatBonusPart = (label, value) => {
+  const numericValue = Number(value) || 0;
+  return numericValue > 0 ? `${label} +${numericValue}` : null;
+};
+
+const formatCombatSummary = (item) => {
+  const parts = [
+    formatBonusPart("DMG", item.weaponDamage),
+    formatBonusPart("ARM", item.armor),
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(" | ") : "No combat bonus";
+};
+
+const formatStatSummary = (item) => {
+  const parts = [
+    formatBonusPart("STR", item.strengthBonus),
+    formatBonusPart("INT", item.intelligenceBonus),
+    formatBonusPart("AGI", item.agilityBonus),
+    formatBonusPart("LUCK", item.luckBonus),
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(" | ") : "No stat bonus";
+};
+
 function updateCharacterSheet(sheet) {
   const profileCard = getById("profileCard");
   if (profileCard) {
@@ -66,6 +91,8 @@ function updateCharacterSheet(sheet) {
   setText("xpValue", `${sheet.experience} / ${sheet.experienceRequiredForNextLevel}`);
   setText("energyValue", `${sheet.currentEnergy} / ${sheet.maxEnergy}`);
   setText("goldValue", sheet.gold);
+  setText("weaponDamageValue", `+${sheet.weaponDamageBonus}`);
+  setText("armorValue", `+${sheet.armorBonus}`);
   setText("strengthValue", sheet.strength);
   setText("intelligenceValue", sheet.intelligence);
   setText("agilityValue", sheet.agility);
@@ -99,11 +126,15 @@ function createSlotCard(slot) {
   const title = document.createElement("strong");
   title.textContent = slot.itemName ?? "Empty";
 
+  const combat = document.createElement("small");
+  combat.className = "slot-card__combat";
+  combat.textContent = formatCombatSummary(slot);
+
   const bonus = document.createElement("small");
   bonus.className = "slot-card__bonus";
-  bonus.textContent = slot.bonusSummary;
+  bonus.textContent = formatStatSummary(slot);
 
-  card.append(slotLabel, title, bonus);
+  card.append(slotLabel, title, combat, bonus);
 
   if (slot.itemName) {
     const button = document.createElement("button");
@@ -143,13 +174,17 @@ function createInventoryItemCell(item) {
 
   const bonus = document.createElement("div");
   bonus.className = "inventory-item__bonus";
-  bonus.textContent = item.bonusSummary;
+  bonus.textContent = formatStatSummary(item);
+
+  const combat = document.createElement("div");
+  combat.className = "inventory-item__combat";
+  combat.textContent = formatCombatSummary(item);
 
   const value = document.createElement("div");
   value.className = "inventory-item__value";
   value.textContent = `${item.goldValue} gold value`;
 
-  cell.append(slot, title, bonus, value);
+  cell.append(slot, title, combat, bonus, value);
 
   if (item.equipped) {
     const status = document.createElement("div");

@@ -129,6 +129,14 @@ public class Character {
         return calculateEquippedBonus(InventoryItem::getLuckBonus);
     }
 
+    public int getWeaponDamageFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getWeaponDamage);
+    }
+
+    public int getArmorFromEquipment() {
+        return calculateEquippedBonus(InventoryItem::getArmor);
+    }
+
     public int getEffectiveStrength() {
         return stats.getStrength() + getStrengthBonusFromEquipment();
     }

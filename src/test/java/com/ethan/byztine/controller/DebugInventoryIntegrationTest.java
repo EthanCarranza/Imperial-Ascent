@@ -31,7 +31,7 @@ class DebugInventoryIntegrationTest {
     void characterSheetShouldLoadInventoryWithoutLazyInitializationFailure() throws Exception {
         User user = new User("theodora", "theodora-inventory@test.com", "hash");
         Character character = new Character("Theodora");
-        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
 
         character.addItem(sword);
         character.equipItem(sword.getId());
@@ -42,7 +42,9 @@ class DebugInventoryIntegrationTest {
                 .param("email", user.getEmail()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.inventoryUsage").value(1))
+                .andExpect(jsonPath("$.weaponDamageBonus").value(2))
                 .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.equipmentSlots[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"));
     }
 }

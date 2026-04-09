@@ -172,8 +172,8 @@ public class CharacterTest {
     @Test
     void equippingItemShouldApplyBonusesAndReplaceSameSlotItem() {
         Character character = new Character("Marcus");
-        InventoryItem oldSword = new InventoryItem("Old Sword", EquipmentSlot.WEAPON, 30, 1, 0, 0, 0);
-        InventoryItem newSword = new InventoryItem("New Sword", EquipmentSlot.WEAPON, 60, 3, 0, 0, 0);
+        InventoryItem oldSword = new InventoryItem("Old Sword", EquipmentSlot.WEAPON, 30, 1, 0, 0, 0, 1, 0);
+        InventoryItem newSword = new InventoryItem("New Sword", EquipmentSlot.WEAPON, 60, 3, 0, 0, 0, 2, 0);
         InventoryItem ring = new InventoryItem("Ring", EquipmentSlot.RING, 50, 0, 2, 0, 1);
 
         character.addItem(oldSword);
@@ -187,9 +187,29 @@ public class CharacterTest {
         assertEquals(8, character.getEffectiveStrength());
         assertEquals(7, character.getEffectiveIntelligence());
         assertEquals(6, character.getEffectiveLuck());
+        assertEquals(2, character.getWeaponDamageFromEquipment());
+        assertEquals(0, character.getArmorFromEquipment());
         assertFalse(oldSword.isEquipped());
         assertTrue(newSword.isEquipped());
         assertTrue(ring.isEquipped());
+    }
+
+    @Test
+    void equippingArmorPiecesShouldIncreaseArmorMitigation() {
+        Character character = new Character("Marcus");
+        InventoryItem armor = new InventoryItem("Armor", EquipmentSlot.ARMOR, 70, 1, 0, 0, 1, 0, 2);
+        InventoryItem helm = new InventoryItem("Helm", EquipmentSlot.HELM, 50, 1, 0, 1, 0, 0, 1);
+
+        character.addItem(armor);
+        character.addItem(helm);
+
+        character.equipItem(armor.getId());
+        character.equipItem(helm.getId());
+
+        assertEquals(3, character.getArmorFromEquipment());
+        assertEquals(7, character.getEffectiveStrength());
+        assertEquals(6, character.getEffectiveAgility());
+        assertEquals(6, character.getEffectiveLuck());
     }
 
     @Test

@@ -7,21 +7,35 @@ public class Combatant {
     private final int strength;
     private final int agility;
     private final int luck;
+    private final int weaponDamage;
+    private final int armor;
     private int currentHealth;
 
     public Combatant(int attack, int defense, int health) {
-        this(attack, defense, health, 5, 5, 5);
+        this(attack, defense, health, 5, 5, 5, 0, 0);
     }
 
     public Combatant(int attack, int defense, int health, int agility) {
-        this(attack, defense, health, 5, agility, 5);
+        this(attack, defense, health, 5, agility, 5, 0, 0);
     }
 
     public Combatant(int attack, int defense, int health, int strength, int agility) {
-        this(attack, defense, health, strength, agility, 5);
+        this(attack, defense, health, strength, agility, 5, 0, 0);
     }
 
     public Combatant(int attack, int defense, int health, int strength, int agility, int luck) {
+        this(attack, defense, health, strength, agility, luck, 0, 0);
+    }
+
+    public Combatant(
+            int attack,
+            int defense,
+            int health,
+            int strength,
+            int agility,
+            int luck,
+            int weaponDamage,
+            int armor) {
         if (health <= 0) {
             throw new IllegalArgumentException("Health must be positive");
         }
@@ -34,12 +48,20 @@ public class Combatant {
         if (luck <= 0) {
             throw new IllegalArgumentException("Luck must be positive");
         }
+        if (weaponDamage < 0) {
+            throw new IllegalArgumentException("Weapon damage cannot be negative");
+        }
+        if (armor < 0) {
+            throw new IllegalArgumentException("Armor cannot be negative");
+        }
         this.attack = attack;
         this.defense = defense;
         this.currentHealth = health;
         this.strength = strength;
         this.agility = agility;
         this.luck = luck;
+        this.weaponDamage = weaponDamage;
+        this.armor = armor;
     }
 
     public boolean isAlive() {
@@ -75,5 +97,13 @@ public class Combatant {
 
     public int getLuck() {
         return luck;
+    }
+
+    public int getWeaponDamage() {
+        return weaponDamage;
+    }
+
+    public int getArmor() {
+        return armor;
     }
 }

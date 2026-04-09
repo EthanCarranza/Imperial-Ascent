@@ -41,6 +41,12 @@ public class InventoryItem {
     private int luckBonus;
 
     @Column(nullable = false)
+    private int weaponDamage;
+
+    @Column(nullable = false)
+    private int armor;
+
+    @Column(nullable = false)
     private boolean equipped;
 
     protected InventoryItem() {
@@ -54,6 +60,19 @@ public class InventoryItem {
             int intelligenceBonus,
             int agilityBonus,
             int luckBonus) {
+        this(name, slot, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, 0, 0);
+    }
+
+    public InventoryItem(
+            String name,
+            EquipmentSlot slot,
+            int goldValue,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
 
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Item name cannot be empty");
@@ -75,6 +94,8 @@ public class InventoryItem {
         this.intelligenceBonus = requireNonNegativeBonus(intelligenceBonus, "Intelligence");
         this.agilityBonus = requireNonNegativeBonus(agilityBonus, "Agility");
         this.luckBonus = requireNonNegativeBonus(luckBonus, "Luck");
+        this.weaponDamage = requireNonNegativeBonus(weaponDamage, "Weapon damage");
+        this.armor = requireNonNegativeBonus(armor, "Armor");
         this.equipped = false;
     }
 
@@ -90,7 +111,9 @@ public class InventoryItem {
                 preset.getStrengthBonus(),
                 preset.getIntelligenceBonus(),
                 preset.getAgilityBonus(),
-                preset.getLuckBonus());
+                preset.getLuckBonus(),
+                preset.getWeaponDamage(),
+                preset.getArmor());
     }
 
     public UUID getId() {
@@ -125,6 +148,14 @@ public class InventoryItem {
         return luckBonus;
     }
 
+    public int getWeaponDamage() {
+        return weaponDamage;
+    }
+
+    public int getArmor() {
+        return armor;
+    }
+
     public boolean isEquipped() {
         return equipped;
     }
@@ -140,6 +171,8 @@ public class InventoryItem {
     public String getBonusSummary() {
         List<String> parts = new ArrayList<>();
 
+        appendBonus(parts, "DMG", weaponDamage);
+        appendBonus(parts, "ARM", armor);
         appendBonus(parts, "STR", strengthBonus);
         appendBonus(parts, "INT", intelligenceBonus);
         appendBonus(parts, "AGI", agilityBonus);

@@ -89,6 +89,16 @@
                   <strong id="goldValue">--</strong>
                   <div class="meter meter--gold"><span id="goldMeter"></span></div>
                 </article>
+                <article class="mini-card">
+                  <span class="mini-label">Weapon</span>
+                  <strong id="weaponDamageValue">--</strong>
+                  <small>Damage from gear</small>
+                </article>
+                <article class="mini-card">
+                  <span class="mini-label">Armor</span>
+                  <strong id="armorValue">--</strong>
+                  <small>Mitigation from gear</small>
+                </article>
               </div>
 
               <div class="card-head compact">
@@ -237,15 +247,30 @@
               <div class="card-head">
                 <p class="eyebrow">Inventory</p>
                 <h3>Grant items y equipo</h3>
-                <p class="muted">Concede presets desde debug y equipa o desequipa directamente desde la ficha lateral.</p>
+                <p class="muted">Concede presets, crea objetos manuales y equipa o desequipa desde la ficha lateral.</p>
               </div>
               <form class="form-grid" data-debug-form="true" data-log-label="Grant Item" action="/api/debug/add-item-preset" method="post">
                 <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
                 <label class="field"><span>Preset</span><select name="preset"><option value="training-sword">Training Sword</option><option value="lamellar-armor">Lamellar Armor</option><option value="cavalry-clasp">Cavalry Clasp</option><option value="tagmatic-helm">Tagmatic Helm</option><option value="porphyry-ring">Porphyry Ring</option><option value="imperial-icon">Imperial Icon</option></select></label>
                 <button class="full-span" type="submit">Grant Preset Item</button>
               </form>
+              <form class="form-grid separated" data-debug-form="true" data-log-label="Create Item" action="/api/debug/create-item" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Name</span><input name="name" placeholder="Item name" autocomplete="off" /></label>
+                <label class="field"><span>Slot</span><select name="slot"><option value="weapon">Weapon</option><option value="armor">Armor</option><option value="accessory">Accessory</option><option value="helm">Helm</option><option value="ring">Ring</option><option value="relic">Relic</option></select></label>
+                <label class="field"><span>Gold value</span><input name="goldValue" type="number" min="0" value="0" /></label>
+                <div class="compact-grid full-span">
+                  <label class="field"><span>DMG</span><input name="weaponDamage" type="number" min="0" value="0" /></label>
+                  <label class="field"><span>ARM</span><input name="armor" type="number" min="0" value="0" /></label>
+                  <label class="field"><span>STR</span><input name="strengthBonus" type="number" min="0" value="0" /></label>
+                  <label class="field"><span>INT</span><input name="intelligenceBonus" type="number" min="0" value="0" /></label>
+                  <label class="field"><span>AGI</span><input name="agilityBonus" type="number" min="0" value="0" /></label>
+                  <label class="field"><span>LUCK</span><input name="luckBonus" type="number" min="0" value="0" /></label>
+                </div>
+                <button class="full-span" type="submit">Create Custom Item</button>
+              </form>
               <div class="inventory-help">
-                <span>Los bonus de equipo afectan a la ficha y al combate desde esta misma version.</span>
+                <span>El gold value es manual por ahora: en presets viene fijo y en items custom lo decides tu.</span>
               </div>
             </article>
           </section>

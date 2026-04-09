@@ -14,11 +14,13 @@ public class CombatantFactory {
         int strength = character.getEffectiveStrength();
         int agility = character.getEffectiveAgility();
         int luck = character.getEffectiveLuck();
+        int weaponDamage = character.getWeaponDamageFromEquipment();
+        int armor = character.getArmorFromEquipment();
 
         int attack = BASE_ATTACK + level;
         int defense = BASE_DEFENSE + level;
         int health = BASE_HEALTH + (level * 5);
 
-        return new Combatant(attack, defense, health, strength, agility, luck);
+        return new Combatant(attack, defense, health, strength, agility, luck, weaponDamage, armor);
     }
 }

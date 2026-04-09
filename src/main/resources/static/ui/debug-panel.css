@@ -473,6 +473,16 @@ button:active { transform: translateY(1px); }
   min-height: 2.5rem;
 }
 
+.slot-card__combat,
+.slot-card__bonus {
+  line-height: 1.35;
+}
+
+.slot-card__combat {
+  color: #6a3a73;
+  font-weight: 700;
+}
+
 .satchel {
   margin-top: 1rem;
   padding: 0.95rem;
@@ -553,9 +563,17 @@ button:active { transform: translateY(1px); }
 }
 
 .inventory-item__bonus {
-  min-height: 2.7rem;
+  min-height: 2.2rem;
   color: rgba(241, 223, 196, 0.74);
   font-size: 0.76rem;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.inventory-item__combat {
+  color: #fff0d0;
+  font-size: 0.76rem;
+  font-weight: 700;
   line-height: 1.35;
   word-break: break-word;
 }

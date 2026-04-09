@@ -44,6 +44,36 @@ class DefaultDamageCalculatorTest {
     }
 
     @Test
+    void higherDefenseShouldReduceDamageWithTheSameRoll() {
+        Combatant attacker = new Combatant(10, 3, 20, 5, 5, 5);
+        Combatant unarmoredDefender = new Combatant(5, 3, 20, 5, 5, 5);
+        Combatant armoredDefender = new Combatant(5, 5, 20, 5, 5, 5);
+
+        DamageCalculator calculator = new DefaultDamageCalculator(
+                new SequenceRandomProvider(0, 2, 99, 0, 2, 99));
+
+        int damageVsUnarmored = calculator.calculate(attacker, unarmoredDefender);
+        int damageVsArmored = calculator.calculate(attacker, armoredDefender);
+
+        assertTrue(damageVsUnarmored > damageVsArmored);
+    }
+
+    @Test
+    void armorMitigationShouldReduceDamageWithTheSameRoll() {
+        Combatant attacker = new Combatant(10, 3, 20, 5, 5, 5, 2, 0);
+        Combatant defenderWithoutArmor = new Combatant(5, 3, 20, 5, 5, 5, 0, 0);
+        Combatant defenderWithArmor = new Combatant(5, 3, 20, 5, 5, 5, 0, 2);
+
+        DamageCalculator calculator = new DefaultDamageCalculator(
+                new SequenceRandomProvider(0, 2, 99, 0, 2, 99));
+
+        int damageWithoutArmor = calculator.calculate(attacker, defenderWithoutArmor);
+        int damageWithArmor = calculator.calculate(attacker, defenderWithArmor);
+
+        assertTrue(damageWithoutArmor > damageWithArmor);
+    }
+
+    @Test
     void higherLuckShouldOccasionallyShiftDamageVariationInAttackersFavor() {
         Combatant luckyAttacker = new Combatant(10, 3, 20, 5, 5, 8);
         Combatant normalAttacker = new Combatant(10, 3, 20, 5, 5, 5);

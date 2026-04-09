@@ -3,12 +3,12 @@ package com.ethan.byztine.domain.inventory;
 import java.util.Locale;
 
 public enum ItemPreset {
-    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 45, 2, 0, 0, 0),
-    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 70, 1, 0, 0, 1),
-    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 55, 0, 0, 2, 0),
-    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 50, 1, 0, 1, 0),
-    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 80, 0, 2, 0, 1),
-    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 95, 0, 1, 0, 2);
+    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 45, 0, 0, 0, 0, 2, 0),
+    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 70, 0, 0, 0, 0, 0, 1),
+    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 55, 0, 0, 1, 0, 0, 0),
+    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 50, 0, 0, 0, 0, 0, 1),
+    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 80, 0, 1, 0, 0, 0, 0),
+    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 95, 0, 0, 0, 1, 0, 0);
 
     private final String id;
     private final String displayName;
@@ -18,6 +18,8 @@ public enum ItemPreset {
     private final int intelligenceBonus;
     private final int agilityBonus;
     private final int luckBonus;
+    private final int weaponDamage;
+    private final int armor;
 
     ItemPreset(
             String id,
@@ -27,7 +29,9 @@ public enum ItemPreset {
             int strengthBonus,
             int intelligenceBonus,
             int agilityBonus,
-            int luckBonus) {
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
 
         this.id = id;
         this.displayName = displayName;
@@ -37,6 +41,8 @@ public enum ItemPreset {
         this.intelligenceBonus = intelligenceBonus;
         this.agilityBonus = agilityBonus;
         this.luckBonus = luckBonus;
+        this.weaponDamage = weaponDamage;
+        this.armor = armor;
     }
 
     public String getId() {
@@ -69,6 +75,14 @@ public enum ItemPreset {
 
     public int getLuckBonus() {
         return luckBonus;
+    }
+
+    public int getWeaponDamage() {
+        return weaponDamage;
+    }
+
+    public int getArmor() {
+        return armor;
     }
 
     public static ItemPreset fromId(String value) {

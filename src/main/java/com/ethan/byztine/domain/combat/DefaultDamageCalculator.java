@@ -11,6 +11,9 @@ public class DefaultDamageCalculator implements DamageCalculator {
     private static final double HIT_CHANCE_CURVE_DIVISOR = 3.5;
     private static final int BASE_STRENGTH = 5;
     private static final double DAMAGE_MULTIPLIER_PER_STRENGTH_POINT = 0.08;
+    private static final double DAMAGE_MULTIPLIER_PER_WEAPON_DAMAGE = 0.08;
+    private static final double DAMAGE_REDUCTION_PER_ARMOR_POINT = 0.08;
+    private static final double MIN_ARMOR_MULTIPLIER = 0.35;
     private static final int BASE_CRIT_CHANCE = 3;
     private static final double POSITIVE_CRIT_CHANCE_SWING = 7.0;
     private static final double NEGATIVE_CRIT_CHANCE_SWING = 2.0;
@@ -37,13 +40,15 @@ public class DefaultDamageCalculator implements DamageCalculator {
             return 0;
         }
 
-        int baseDamage = attacker.getAttack() - defender.getDefense();
+        double baseDamage = attacker.getAttack() - defender.getDefense();
         int variation = randomProvider.nextInt(5) - 2;
         int luckAdjustedVariation = applyLuckSwing(variation, attacker, defender);
 
         double rawDamage = Math.max(1.0, baseDamage + luckAdjustedVariation);
         double strengthMultiplier = calculateStrengthMultiplier(attacker);
-        int finalDamage = (int) Math.round(rawDamage * strengthMultiplier);
+        double weaponMultiplier = calculateWeaponMultiplier(attacker);
+        double armorMultiplier = calculateArmorMultiplier(defender);
+        int finalDamage = (int) Math.round(rawDamage * strengthMultiplier * weaponMultiplier * armorMultiplier);
         int criticalDamage = applyCriticalHit(finalDamage, attacker, defender);
 
         return Math.max(1, criticalDamage);
@@ -65,6 +70,16 @@ public class DefaultDamageCalculator implements DamageCalculator {
                 BASE_STRENGTH);
 
         return Math.max(0.25, 1.0 + (strengthDifference * DAMAGE_MULTIPLIER_PER_STRENGTH_POINT));
+    }
+
+    private double calculateWeaponMultiplier(Combatant attacker) {
+        return 1.0 + (attacker.getWeaponDamage() * DAMAGE_MULTIPLIER_PER_WEAPON_DAMAGE);
+    }
+
+    private double calculateArmorMultiplier(Combatant defender) {
+        return Math.max(
+                MIN_ARMOR_MULTIPLIER,
+                1.0 - (defender.getArmor() * DAMAGE_REDUCTION_PER_ARMOR_POINT));
     }
 
     private int applyCriticalHit(int damage, Combatant attacker, Combatant defender) {

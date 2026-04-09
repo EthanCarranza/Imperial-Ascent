@@ -66,7 +66,7 @@ class UserPersistenceTest {
 
         User user = new User("marcus", "marcus3@test.com", "hash123");
         Character character = new Character("Aurelius");
-        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
 
         character.addItem(sword);
         character.equipItem(sword.getId());
@@ -79,6 +79,7 @@ class UserPersistenceTest {
         assertTrue(retrieved.isPresent());
         assertEquals(1, retrieved.get().getCharacter().getInventoryUsage());
         assertEquals(7, retrieved.get().getCharacter().getEffectiveStrength());
+        assertEquals(2, retrieved.get().getCharacter().getWeaponDamageFromEquipment());
         assertTrue(retrieved.get().getCharacter().getEquippedItem(EquipmentSlot.WEAPON).isPresent());
     }
 }

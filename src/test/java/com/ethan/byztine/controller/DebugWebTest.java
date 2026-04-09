@@ -171,7 +171,7 @@ class DebugWebTest {
         User user = createUserWithCharacter();
         user.getCharacter().gainExperience(40);
         user.getCharacter().addGold(25);
-        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
         user.getCharacter().addItem(sword);
         user.getCharacter().equipItem(sword.getId());
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
@@ -186,10 +186,14 @@ class DebugWebTest {
                 .andExpect(jsonPath("$.experienceRequiredForNextLevel").value(100))
                 .andExpect(jsonPath("$.gold").value(25))
                 .andExpect(jsonPath("$.strength").value(7))
+                .andExpect(jsonPath("$.weaponDamageBonus").value(2))
+                .andExpect(jsonPath("$.armorBonus").value(0))
                 .andExpect(jsonPath("$.inventoryUsage").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].displayName").value("Weapon"))
                 .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.equipmentSlots[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"))
+                .andExpect(jsonPath("$.inventoryItems[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.luck").value(5));
     }
 
@@ -209,9 +213,33 @@ class DebugWebTest {
     }
 
     @Test
+    void createItemEndpointShouldGrantCustomItemAndPersistUser() throws Exception {
+        User user = createUserWithCharacter();
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/debug/create-item")
+                .param("email", user.getEmail())
+                .param("name", "Bronze Spear")
+                .param("slot", "weapon")
+                .param("goldValue", "65")
+                .param("weaponDamage", "3")
+                .param("strengthBonus", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Created item: Bronze Spear [Weapon] value 65"));
+
+        assertEquals(1, user.getCharacter().getInventoryUsage());
+        InventoryItem item = user.getCharacter().getInventoryItems().get(0);
+        assertEquals("Bronze Spear", item.getName());
+        assertEquals(65, item.getGoldValue());
+        assertEquals(3, item.getWeaponDamage());
+        assertEquals(1, item.getStrengthBonus());
+        verify(userRepository).save(user);
+    }
+
+    @Test
     void equipItemEndpointShouldEquipItem() throws Exception {
         User user = createUserWithCharacter();
-        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
         user.getCharacter().addItem(sword);
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 

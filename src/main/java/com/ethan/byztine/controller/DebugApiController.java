@@ -179,6 +179,51 @@ public class DebugApiController {
         });
     }
 
+    @PostMapping("/create-item")
+    public String createItem(
+            @RequestParam String email,
+            @RequestParam String name,
+            @RequestParam String slot,
+            @RequestParam(defaultValue = "0") int goldValue,
+            @RequestParam(defaultValue = "0") int strengthBonus,
+            @RequestParam(defaultValue = "0") int intelligenceBonus,
+            @RequestParam(defaultValue = "0") int agilityBonus,
+            @RequestParam(defaultValue = "0") int luckBonus,
+            @RequestParam(defaultValue = "0") int weaponDamage,
+            @RequestParam(defaultValue = "0") int armor) {
+
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character character = requireCharacter(user, "User");
+            EquipmentSlot equipmentSlot = EquipmentSlot.fromId(slot);
+
+            requireNonNegativeAmount(goldValue, "Gold value");
+            requireNonNegativeAmount(strengthBonus, "Strength bonus");
+            requireNonNegativeAmount(intelligenceBonus, "Intelligence bonus");
+            requireNonNegativeAmount(agilityBonus, "Agility bonus");
+            requireNonNegativeAmount(luckBonus, "Luck bonus");
+            requireNonNegativeAmount(weaponDamage, "Weapon damage");
+            requireNonNegativeAmount(armor, "Armor");
+
+            InventoryItem item = new InventoryItem(
+                    name,
+                    equipmentSlot,
+                    goldValue,
+                    strengthBonus,
+                    intelligenceBonus,
+                    agilityBonus,
+                    luckBonus,
+                    weaponDamage,
+                    armor);
+
+            character.addItem(item);
+            userRepository.save(user);
+
+            return "Created item: " + item.getName() + " ["
+                    + item.getSlot().getDisplayName() + "] value " + item.getGoldValue();
+        });
+    }
+
     @PostMapping("/equip-item")
     public String equipItem(@RequestParam String email,
             @RequestParam String itemId) {
@@ -287,6 +332,8 @@ public class DebugApiController {
                     "\nEnergy: " + character.getEnergy().getCurrentEnergy() + " / "
                     + character.getEnergy().getMaxEnergy() +
                     "\nGold: " + character.getGold() +
+                    "\nWeapon Damage: " + character.getWeaponDamageFromEquipment() +
+                    "\nArmor: " + character.getArmorFromEquipment() +
                     "\nSTR: " + character.getEffectiveStrength() +
                     " (base " + character.getStats().getStrength() + ")" +
                     "\nINT: " + character.getEffectiveIntelligence() +
@@ -329,6 +376,8 @@ public class DebugApiController {
                     character.getIntelligenceBonusFromEquipment(),
                     character.getAgilityBonusFromEquipment(),
                     character.getLuckBonusFromEquipment(),
+                    character.getWeaponDamageFromEquipment(),
+                    character.getArmorFromEquipment(),
                     character.getInventoryCapacity(),
                     character.getInventoryUsage(),
                     buildEquipmentSlots(character),
@@ -376,6 +425,12 @@ public class DebugApiController {
         }
     }
 
+    private void requireNonNegativeAmount(int amount, String label) {
+        if (amount < 0) {
+            throw new IllegalArgumentException(label + " cannot be negative");
+        }
+    }
+
     private String handleRequest(Supplier<String> action) {
         try {
             return action.get();
@@ -415,6 +470,12 @@ public class DebugApiController {
                                 slot.getDisplayName(),
                                 null,
                                 null,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
                                 "Empty");
                     }
 
@@ -423,6 +484,12 @@ public class DebugApiController {
                             slot.getDisplayName(),
                             item.getId() == null ? null : item.getId().toString(),
                             item.getName(),
+                            item.getStrengthBonus(),
+                            item.getIntelligenceBonus(),
+                            item.getAgilityBonus(),
+                            item.getLuckBonus(),
+                            item.getWeaponDamage(),
+                            item.getArmor(),
                             item.getBonusSummary());
                 })
                 .toList();
@@ -441,6 +508,8 @@ public class DebugApiController {
                         item.getIntelligenceBonus(),
                         item.getAgilityBonus(),
                         item.getLuckBonus(),
+                        item.getWeaponDamage(),
+                        item.getArmor(),
                         item.getBonusSummary()))
                 .toList();
     }
@@ -589,6 +658,8 @@ public class DebugApiController {
             int intelligenceBonus,
             int agilityBonus,
             int luckBonus,
+            int weaponDamageBonus,
+            int armorBonus,
             int inventoryCapacity,
             int inventoryUsage,
             List<EquipmentSlotResponse> equipmentSlots,
@@ -600,6 +671,12 @@ public class DebugApiController {
             String displayName,
             String itemId,
             String itemName,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor,
             String bonusSummary) {
     }
 
@@ -614,6 +691,8 @@ public class DebugApiController {
             int intelligenceBonus,
             int agilityBonus,
             int luckBonus,
+            int weaponDamage,
+            int armor,
             String bonusSummary) {
     }
 }

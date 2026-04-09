@@ -31,18 +31,25 @@ class CombatantFactoryTest {
     @Test
     void combatantFactoryShouldIncludeEquippedItemBonuses() {
         Character equipped = new Character("Equipped");
-        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0);
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
+        InventoryItem armor = new InventoryItem("Armor", EquipmentSlot.ARMOR, 70, 1, 0, 0, 1, 0, 2);
         InventoryItem charm = new InventoryItem("Charm", EquipmentSlot.ACCESSORY, 45, 0, 0, 1, 2);
 
         equipped.addItem(sword);
+        equipped.addItem(armor);
         equipped.addItem(charm);
         equipped.equipItem(sword.getId());
+        equipped.equipItem(armor.getId());
         equipped.equipItem(charm.getId());
 
         Combatant combatant = CombatantFactory.fromCharacter(equipped);
 
-        assertEquals(7, combatant.getStrength());
+        assertEquals(6, combatant.getAttack());
+        assertEquals(4, combatant.getDefense());
+        assertEquals(8, combatant.getStrength());
         assertEquals(6, combatant.getAgility());
-        assertEquals(7, combatant.getLuck());
+        assertEquals(8, combatant.getLuck());
+        assertEquals(2, combatant.getWeaponDamage());
+        assertEquals(2, combatant.getArmor());
     }
 }
