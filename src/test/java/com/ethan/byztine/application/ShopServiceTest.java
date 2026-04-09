@@ -144,6 +144,59 @@ class ShopServiceTest {
         assertEquals(user.getCharacter().getInventoryCapacity(), user.getCharacter().getInventoryUsage());
     }
 
+    @Test
+    void shouldSellItemAndRestoreItsDisplayedValueAsGold() {
+        InMemoryUserRepository repository = new InMemoryUserRepository();
+        ShopService service = new ShopService(repository);
+        User user = createUserWithCharacter("seller@test.com", "Cassius");
+        InventoryItem sword = InventoryItem.fromPreset(ItemPreset.TRAINING_SWORD, 2);
+        user.getCharacter().addItem(sword);
+        user.getCharacter().equipItem(sword.getId());
+        repository.save(user);
+
+        ShopService.InventoryAction action = service.sellItem(user.getEmail(), sword.getId().toString());
+
+        assertEquals("sold", action.action());
+        assertEquals("Training Sword", action.itemName());
+        assertEquals(sword.getGoldValue(), action.goldDelta());
+        assertEquals(sword.getGoldValue(), action.goldRemaining());
+        assertEquals(0, user.getCharacter().getInventoryUsage());
+        assertTrue(user.getCharacter().getEquippedItem(ItemPreset.TRAINING_SWORD.getSlot()).isEmpty());
+    }
+
+    @Test
+    void shouldDestroyItemWithoutChangingGold() {
+        InMemoryUserRepository repository = new InMemoryUserRepository();
+        ShopService service = new ShopService(repository);
+        User user = createUserWithCharacter("destroyer@test.com", "Cassius");
+        user.getCharacter().addGold(50);
+        InventoryItem ring = InventoryItem.fromPreset(ItemPreset.PORPHYRY_RING, 1);
+        user.getCharacter().addItem(ring);
+        repository.save(user);
+
+        ShopService.InventoryAction action = service.destroyItem(user.getEmail(), ring.getId().toString());
+
+        assertEquals("destroyed", action.action());
+        assertEquals("Porphyry Ring", action.itemName());
+        assertEquals(0, action.goldDelta());
+        assertEquals(50, action.goldRemaining());
+        assertEquals(0, user.getCharacter().getInventoryUsage());
+        assertEquals(50, user.getCharacter().getGold());
+    }
+
+    @Test
+    void shouldRejectSellWhenItemIdIsInvalid() {
+        InMemoryUserRepository repository = new InMemoryUserRepository();
+        ShopService service = new ShopService(repository);
+        User user = createUserWithCharacter("bad-id@test.com", "Cassius");
+        repository.save(user);
+
+        assertEquals(
+                "Item id is invalid",
+                assertThrows(IllegalArgumentException.class,
+                        () -> service.sellItem(user.getEmail(), "bad-id")).getMessage());
+    }
+
     private User createUserWithCharacter(String email, String characterName) {
         User user = new User(characterName.toLowerCase(), email, "hash");
         user.assignCharacter(new Character(characterName));

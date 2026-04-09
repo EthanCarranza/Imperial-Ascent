@@ -194,6 +194,13 @@ public class Character {
         inventoryItems.add(item);
     }
 
+    public InventoryItem removeItem(UUID itemId) {
+        InventoryItem item = requireInventoryItem(itemId);
+        item.unequip();
+        inventoryItems.remove(item);
+        return item;
+    }
+
     public void equipItem(UUID itemId) {
         InventoryItem item = requireInventoryItem(itemId);
 

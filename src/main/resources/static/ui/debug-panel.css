@@ -607,11 +607,27 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.inventory-item__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
 .mini-action {
   min-height: 2rem;
-  margin-top: auto;
   padding: 0.45rem 0.6rem;
   font-size: 0.76rem;
+}
+
+.mini-action--sell {
+  background: linear-gradient(180deg, #7a6526, #5b491b 54%, #413313 100%);
+  border-color: rgba(76, 56, 16, 0.88);
+}
+
+.mini-action--danger {
+  background: linear-gradient(180deg, #7f4a57, #62313f 54%, #471f2b 100%);
+  border-color: rgba(70, 24, 38, 0.9);
 }
 
 .inventory-help {

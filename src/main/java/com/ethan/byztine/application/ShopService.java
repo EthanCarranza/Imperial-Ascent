@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -68,6 +69,39 @@ public class ShopService {
                 character.getGold());
     }
 
+    public InventoryAction sellItem(String email, String itemId) {
+        User user = requireUserByEmail(email);
+        Character character = requireCharacter(user);
+        InventoryItem item = character.removeItem(parseItemId(itemId));
+        int salePrice = item.getGoldValue();
+
+        character.addGold(salePrice);
+        userRepository.save(user);
+
+        return new InventoryAction(
+                "sold",
+                item.getName(),
+                item.getSlot().getDisplayName(),
+                item.getLevel(),
+                salePrice,
+                character.getGold());
+    }
+
+    public InventoryAction destroyItem(String email, String itemId) {
+        User user = requireUserByEmail(email);
+        Character character = requireCharacter(user);
+        InventoryItem item = character.removeItem(parseItemId(itemId));
+        userRepository.save(user);
+
+        return new InventoryAction(
+                "destroyed",
+                item.getName(),
+                item.getSlot().getDisplayName(),
+                item.getLevel(),
+                0,
+                character.getGold());
+    }
+
     private ShopOffer buildOffer(ItemPreset preset, int level, int availableGold) {
         InventoryItem item = InventoryItem.fromPreset(preset, level);
         int price = calculateBuyPrice(item);
@@ -108,6 +142,18 @@ public class ShopService {
         }
 
         return requestedLevel;
+    }
+
+    private UUID parseItemId(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Item id is invalid");
+        }
+
+        try {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Item id is invalid");
+        }
     }
 
     private User requireUserByEmail(String email) {
@@ -155,6 +201,15 @@ public class ShopService {
             String slotDisplayName,
             int itemLevel,
             int price,
+            int goldRemaining) {
+    }
+
+    public record InventoryAction(
+            String action,
+            String itemName,
+            String slotDisplayName,
+            int itemLevel,
+            int goldDelta,
             int goldRemaining) {
     }
 }

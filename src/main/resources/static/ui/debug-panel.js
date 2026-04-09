@@ -191,9 +191,12 @@ function createInventoryItemCell(item) {
 
   const value = document.createElement("div");
   value.className = "inventory-item__value";
-  value.textContent = `${item.goldValue} gold value`;
+  value.textContent = `${item.goldValue} sell value`;
 
   cell.append(slot, title, level, combat, bonus, value);
+
+  const actionRow = document.createElement("div");
+  actionRow.className = "inventory-item__actions";
 
   if (item.equipped) {
     const status = document.createElement("div");
@@ -206,8 +209,23 @@ function createInventoryItemCell(item) {
     button.className = "mini-action";
     button.dataset.equipItem = item.id;
     button.textContent = "Equip";
-    cell.append(button);
+    actionRow.append(button);
   }
+
+  const sellButton = document.createElement("button");
+  sellButton.type = "button";
+  sellButton.className = "mini-action mini-action--sell";
+  sellButton.dataset.sellItem = item.id;
+  sellButton.textContent = "Sell";
+
+  const destroyButton = document.createElement("button");
+  destroyButton.type = "button";
+  destroyButton.className = "mini-action mini-action--danger";
+  destroyButton.dataset.destroyItem = item.id;
+  destroyButton.textContent = "Destroy";
+
+  actionRow.append(sellButton, destroyButton);
+  cell.append(actionRow);
 
   return cell;
 }
@@ -577,6 +595,40 @@ function handleInventoryClick(event) {
         level: buyButton.dataset.buyLevel,
       },
       "Buy Item",
+    );
+    return;
+  }
+
+  const sellButton = event.target.closest("[data-sell-item]");
+  if (sellButton) {
+    runInventoryAction(
+      "/api/debug/sell-item",
+      {
+        email: state.activeEmail,
+        itemId: sellButton.dataset.sellItem,
+      },
+      "Sell Item",
+    );
+    return;
+  }
+
+  const destroyButton = event.target.closest("[data-destroy-item]");
+  if (destroyButton) {
+    const confirmed = window.confirm(
+      "Destroy this item permanently? Selling is usually better.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    runInventoryAction(
+      "/api/debug/destroy-item",
+      {
+        email: state.activeEmail,
+        itemId: destroyButton.dataset.destroyItem,
+      },
+      "Destroy Item",
     );
     return;
   }

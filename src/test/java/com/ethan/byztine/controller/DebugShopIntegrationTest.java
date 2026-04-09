@@ -102,6 +102,54 @@ class DebugShopIntegrationTest {
         assertTrue(reloaded.getCharacter().getInventoryItems().stream().noneMatch(InventoryItem::isEquipped));
     }
 
+    @Test
+    void sellItemShouldRemoveItAndAddGoldBack() throws Exception {
+        User user = new User("leo", "leo-shop@test.com", "hash");
+        Character character = new Character("Leo");
+        InventoryItem sword = InventoryItem.fromPreset(ItemPreset.TRAINING_SWORD, 2);
+        character.addItem(sword);
+        character.equipItem(sword.getId());
+        user.assignCharacter(character);
+        userRepository.save(user);
+
+        mockMvc.perform(post("/api/debug/sell-item")
+                .param("email", user.getEmail())
+                .param("itemId", sword.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "Sold item: Training Sword [Weapon] Lv.2 for "
+                                + sword.getGoldValue() + " gold. Gold now: " + sword.getGoldValue()));
+
+        User reloaded = userRepository.findByEmail(user.getEmail()).orElseThrow();
+
+        assertEquals(sword.getGoldValue(), reloaded.getCharacter().getGold());
+        assertEquals(0, reloaded.getCharacter().getInventoryUsage());
+        assertTrue(reloaded.getCharacter().getEquippedItem(ItemPreset.TRAINING_SWORD.getSlot()).isEmpty());
+    }
+
+    @Test
+    void destroyItemShouldRemoveItWithoutChangingGold() throws Exception {
+        User user = new User("anna", "anna-shop@test.com", "hash");
+        Character character = new Character("Anna");
+        character.addGold(40);
+        InventoryItem ring = InventoryItem.fromPreset(ItemPreset.PORPHYRY_RING, 1);
+        character.addItem(ring);
+        user.assignCharacter(character);
+        userRepository.save(user);
+
+        mockMvc.perform(post("/api/debug/destroy-item")
+                .param("email", user.getEmail())
+                .param("itemId", ring.getId().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "Destroyed item: Porphyry Ring [Ring] Lv.1. Gold unchanged: 40"));
+
+        User reloaded = userRepository.findByEmail(user.getEmail()).orElseThrow();
+
+        assertEquals(40, reloaded.getCharacter().getGold());
+        assertEquals(0, reloaded.getCharacter().getInventoryUsage());
+    }
+
     private void levelUpTo(Character character, int targetLevel) {
         int totalExperience = 0;
 

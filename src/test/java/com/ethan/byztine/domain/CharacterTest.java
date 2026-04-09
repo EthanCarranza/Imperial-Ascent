@@ -213,6 +213,23 @@ public class CharacterTest {
     }
 
     @Test
+    void removingEquippedItemShouldFreeSlotAndRemoveBonuses() {
+        Character character = new Character("Marcus");
+        InventoryItem sword = new InventoryItem("Sword", EquipmentSlot.WEAPON, 40, 2, 0, 0, 0, 2, 0);
+
+        character.addItem(sword);
+        character.equipItem(sword.getId());
+        InventoryItem removed = character.removeItem(sword.getId());
+
+        assertEquals("Sword", removed.getName());
+        assertEquals(0, character.getInventoryUsage());
+        assertFalse(removed.isEquipped());
+        assertTrue(character.getEquippedItem(EquipmentSlot.WEAPON).isEmpty());
+        assertEquals(5, character.getEffectiveStrength());
+        assertEquals(0, character.getWeaponDamageFromEquipment());
+    }
+
+    @Test
     void inventoryShouldRejectItemsBeyondCapacity() {
         Character character = new Character("Marcus");
 
@@ -240,5 +257,14 @@ public class CharacterTest {
         assertEquals("No equipped item in slot: Weapon",
                 assertThrows(IllegalStateException.class, () -> character.unequipSlot(EquipmentSlot.WEAPON))
                         .getMessage());
+    }
+
+    @Test
+    void removingUnknownItemShouldFail() {
+        Character character = new Character("Marcus");
+
+        assertEquals("Item not found",
+                assertThrows(IllegalArgumentException.class,
+                        () -> character.removeItem(java.util.UUID.randomUUID())).getMessage());
     }
 }

@@ -316,6 +316,35 @@ public class DebugApiController {
         });
     }
 
+    @PostMapping("/sell-item")
+    public String sellItem(
+            @RequestParam String email,
+            @RequestParam String itemId) {
+
+        return handleRequest(() -> {
+            ShopService.InventoryAction action = shopService.sellItem(email, itemId);
+
+            return "Sold item: " + action.itemName() + " ["
+                    + action.slotDisplayName() + "] Lv." + action.itemLevel()
+                    + " for " + action.goldDelta() + " gold. Gold now: "
+                    + action.goldRemaining();
+        });
+    }
+
+    @PostMapping("/destroy-item")
+    public String destroyItem(
+            @RequestParam String email,
+            @RequestParam String itemId) {
+
+        return handleRequest(() -> {
+            ShopService.InventoryAction action = shopService.destroyItem(email, itemId);
+
+            return "Destroyed item: " + action.itemName() + " ["
+                    + action.slotDisplayName() + "] Lv." + action.itemLevel()
+                    + ". Gold unchanged: " + action.goldRemaining();
+        });
+    }
+
     @PostMapping("/train")
     public String train(@RequestParam String email,
             @RequestParam String stat) {

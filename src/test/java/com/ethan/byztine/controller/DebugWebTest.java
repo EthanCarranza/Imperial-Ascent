@@ -341,6 +341,44 @@ class DebugWebTest {
     }
 
     @Test
+    void sellItemEndpointShouldSellThroughShopService() throws Exception {
+        when(shopService.sellItem("cassius@test.com", "item-1"))
+                .thenReturn(new ShopService.InventoryAction(
+                        "sold",
+                        "Training Sword",
+                        "Weapon",
+                        2,
+                        62,
+                        162));
+
+        mockMvc.perform(post("/api/debug/sell-item")
+                .param("email", "cassius@test.com")
+                .param("itemId", "item-1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "Sold item: Training Sword [Weapon] Lv.2 for 62 gold. Gold now: 162"));
+    }
+
+    @Test
+    void destroyItemEndpointShouldDestroyThroughShopService() throws Exception {
+        when(shopService.destroyItem("cassius@test.com", "item-2"))
+                .thenReturn(new ShopService.InventoryAction(
+                        "destroyed",
+                        "Porphyry Ring",
+                        "Ring",
+                        1,
+                        0,
+                        50));
+
+        mockMvc.perform(post("/api/debug/destroy-item")
+                .param("email", "cassius@test.com")
+                .param("itemId", "item-2"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(
+                        "Destroyed item: Porphyry Ring [Ring] Lv.1. Gold unchanged: 50"));
+    }
+
+    @Test
     void combatEndpointShouldRenderCombatReport() throws Exception {
         User attacker = createUserWithCharacter("attacker@test.com", "Cassius");
         User defender = createUserWithCharacter("defender@test.com", "Maximus");
