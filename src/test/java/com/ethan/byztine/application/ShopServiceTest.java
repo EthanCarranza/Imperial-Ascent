@@ -3,6 +3,7 @@ package com.ethan.byztine.application;
 import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemPreset;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.infrastructure.InMemoryUserRepository;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ class ShopServiceTest {
         assertEquals(500, catalog.gold());
         assertEquals(ItemPreset.values().length, catalog.offers().size());
         assertTrue(catalog.offers().stream().allMatch(offer -> offer.level() == 2));
+        assertTrue(catalog.offers().stream().allMatch(offer -> offer.rarity().equals("common")));
         assertTrue(catalog.offers().stream().allMatch(ShopService.ShopOffer::affordable));
     }
 
@@ -78,6 +80,8 @@ class ShopServiceTest {
 
         assertEquals("Training Sword", purchase.itemName());
         assertEquals("Weapon", purchase.slotDisplayName());
+        assertEquals("common", purchase.rarity());
+        assertEquals("Common", purchase.rarityDisplayName());
         assertEquals(3, purchase.itemLevel());
         assertEquals(expectedPrice, purchase.price());
         assertEquals(500 - expectedPrice, purchase.goldRemaining());
@@ -158,6 +162,8 @@ class ShopServiceTest {
 
         assertEquals("sold", action.action());
         assertEquals("Training Sword", action.itemName());
+        assertEquals("common", action.rarity());
+        assertEquals(ItemRarity.COMMON, sword.getRarity());
         assertEquals(sword.getGoldValue(), action.goldDelta());
         assertEquals(sword.getGoldValue(), action.goldRemaining());
         assertEquals(0, user.getCharacter().getInventoryUsage());
@@ -178,6 +184,7 @@ class ShopServiceTest {
 
         assertEquals("destroyed", action.action());
         assertEquals("Porphyry Ring", action.itemName());
+        assertEquals("Common", action.rarityDisplayName());
         assertEquals(0, action.goldDelta());
         assertEquals(50, action.goldRemaining());
         assertEquals(0, user.getCharacter().getInventoryUsage());

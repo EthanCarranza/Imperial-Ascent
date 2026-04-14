@@ -281,6 +281,7 @@
                 <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
                 <label class="field"><span>Preset</span><select name="preset"><option value="training-sword">Training Sword</option><option value="lamellar-armor">Lamellar Armor</option><option value="cavalry-clasp">Cavalry Clasp</option><option value="tagmatic-helm">Tagmatic Helm</option><option value="porphyry-ring">Porphyry Ring</option><option value="imperial-icon">Imperial Icon</option></select></label>
                 <label class="field"><span>Level</span><input name="level" type="number" min="1" value="1" /></label>
+                <label class="field"><span>Rarity</span><select name="rarity"><option value="common">Common</option><option value="uncommon">Uncommon</option><option value="rare">Rare</option><option value="epic">Epic</option></select></label>
                 <button class="full-span" type="submit">Grant Preset Item</button>
               </form>
               <form class="form-grid separated" data-debug-form="true" data-log-label="Create Item" action="/api/debug/create-item" method="post">
@@ -288,6 +289,7 @@
                 <label class="field"><span>Name</span><input name="name" placeholder="Item name" autocomplete="off" /></label>
                 <label class="field"><span>Slot</span><select name="slot"><option value="weapon">Weapon</option><option value="armor">Armor</option><option value="accessory">Accessory</option><option value="helm">Helm</option><option value="ring">Ring</option><option value="relic">Relic</option></select></label>
                 <label class="field"><span>Level</span><input name="level" type="number" min="1" value="1" /></label>
+                <label class="field"><span>Rarity</span><select name="rarity"><option value="common">Common</option><option value="uncommon">Uncommon</option><option value="rare">Rare</option><option value="epic">Epic</option></select></label>
                 <div class="compact-grid full-span">
                   <label class="field"><span>DMG</span><input name="weaponDamage" type="number" min="0" value="0" /></label>
                   <label class="field"><span>ARM</span><input name="armor" type="number" min="0" value="0" /></label>
@@ -299,7 +301,7 @@
                 <button class="full-span" type="submit">Create Custom Item</button>
               </form>
               <div class="inventory-help">
-                <span>El gold value se calcula segun slot, nivel y poder del item. En la satchel puedes equipar, vender o destruir.</span>
+                <span>El gold value se calcula segun slot, nivel, rareza y poder del item. En la satchel puedes equipar, vender o destruir.</span>
               </div>
             </article>
           </section>

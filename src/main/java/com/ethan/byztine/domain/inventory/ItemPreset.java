@@ -79,16 +79,21 @@ public enum ItemPreset {
     }
 
     public InventoryItem toItem(int level) {
+        return toItem(level, ItemRarity.COMMON);
+    }
+
+    public InventoryItem toItem(int level, ItemRarity rarity) {
         return InventoryItem.scaled(
                 displayName,
                 slot,
+                rarity,
                 level,
-                scaleValue(strengthBonus, level),
-                scaleValue(intelligenceBonus, level),
-                scaleValue(agilityBonus, level),
-                scaleValue(luckBonus, level),
-                scaleValue(weaponDamage, level),
-                scaleValue(armor, level));
+                rarity.scalePower(scaleValue(strengthBonus, level)),
+                rarity.scalePower(scaleValue(intelligenceBonus, level)),
+                rarity.scalePower(scaleValue(agilityBonus, level)),
+                rarity.scalePower(scaleValue(luckBonus, level)),
+                rarity.scalePower(scaleValue(weaponDamage, level)),
+                rarity.scalePower(scaleValue(armor, level)));
     }
 
     private int scaleValue(int baseValue, int level) {

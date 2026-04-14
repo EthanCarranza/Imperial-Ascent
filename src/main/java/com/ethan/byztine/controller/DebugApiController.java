@@ -16,6 +16,7 @@ import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemPreset;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -169,20 +170,23 @@ public class DebugApiController {
     @PostMapping("/add-item-preset")
     public String addItemPreset(@RequestParam String email,
             @RequestParam String preset,
-            @RequestParam(defaultValue = "1") int level) {
+            @RequestParam(defaultValue = "1") int level,
+            @RequestParam(defaultValue = "common") String rarity) {
 
         return handleRequest(() -> {
             User user = requireUserByEmail(email, "User");
             Character character = requireCharacter(user, "User");
             ItemPreset itemPreset = ItemPreset.fromId(preset);
+            ItemRarity itemRarity = ItemRarity.fromId(rarity);
             requireMinimumOne(level, "Item level");
-            InventoryItem item = InventoryItem.fromPreset(itemPreset, level);
+            InventoryItem item = InventoryItem.fromPreset(itemPreset, level, itemRarity);
 
             character.addItem(item);
             userRepository.save(user);
 
             return "Granted item: " + item.getName() + " ["
-                    + item.getSlot().getDisplayName() + "] Lv." + item.getLevel()
+                    + item.getSlot().getDisplayName() + "] "
+                    + item.getRarity().getDisplayName() + " Lv." + item.getLevel()
                     + " value " + item.getGoldValue();
         });
     }
@@ -193,6 +197,7 @@ public class DebugApiController {
             @RequestParam String name,
             @RequestParam String slot,
             @RequestParam(defaultValue = "1") int level,
+            @RequestParam(defaultValue = "common") String rarity,
             @RequestParam(defaultValue = "0") int strengthBonus,
             @RequestParam(defaultValue = "0") int intelligenceBonus,
             @RequestParam(defaultValue = "0") int agilityBonus,
@@ -204,6 +209,7 @@ public class DebugApiController {
             User user = requireUserByEmail(email, "User");
             Character character = requireCharacter(user, "User");
             EquipmentSlot equipmentSlot = EquipmentSlot.fromId(slot);
+            ItemRarity itemRarity = ItemRarity.fromId(rarity);
 
             requireMinimumOne(level, "Item level");
             requireNonNegativeAmount(strengthBonus, "Strength bonus");
@@ -216,6 +222,7 @@ public class DebugApiController {
             InventoryItem item = InventoryItem.scaled(
                     name,
                     equipmentSlot,
+                    itemRarity,
                     level,
                     strengthBonus,
                     intelligenceBonus,
@@ -228,7 +235,8 @@ public class DebugApiController {
             userRepository.save(user);
 
             return "Created item: " + item.getName() + " ["
-                    + item.getSlot().getDisplayName() + "] Lv." + item.getLevel()
+                    + item.getSlot().getDisplayName() + "] "
+                    + item.getRarity().getDisplayName() + " Lv." + item.getLevel()
                     + " value " + item.getGoldValue();
         });
     }
@@ -283,6 +291,8 @@ public class DebugApiController {
                                     offer.name(),
                                     offer.slot(),
                                     offer.slotDisplayName(),
+                                    offer.rarity(),
+                                    offer.rarityDisplayName(),
                                     offer.level(),
                                     offer.price(),
                                     offer.goldValue(),
@@ -310,7 +320,8 @@ public class DebugApiController {
             ShopService.ShopPurchase purchase = shopService.buyCommonItem(email, preset, level);
 
             return "Purchased item: " + purchase.itemName() + " ["
-                    + purchase.slotDisplayName() + "] Lv." + purchase.itemLevel()
+                    + purchase.slotDisplayName() + "] "
+                    + purchase.rarityDisplayName() + " Lv." + purchase.itemLevel()
                     + " for " + purchase.price() + " gold. Gold left: "
                     + purchase.goldRemaining();
         });
@@ -325,7 +336,8 @@ public class DebugApiController {
             ShopService.InventoryAction action = shopService.sellItem(email, itemId);
 
             return "Sold item: " + action.itemName() + " ["
-                    + action.slotDisplayName() + "] Lv." + action.itemLevel()
+                    + action.slotDisplayName() + "] "
+                    + action.rarityDisplayName() + " Lv." + action.itemLevel()
                     + " for " + action.goldDelta() + " gold. Gold now: "
                     + action.goldRemaining();
         });
@@ -340,7 +352,8 @@ public class DebugApiController {
             ShopService.InventoryAction action = shopService.destroyItem(email, itemId);
 
             return "Destroyed item: " + action.itemName() + " ["
-                    + action.slotDisplayName() + "] Lv." + action.itemLevel()
+                    + action.slotDisplayName() + "] "
+                    + action.rarityDisplayName() + " Lv." + action.itemLevel()
                     + ". Gold unchanged: " + action.goldRemaining();
         });
     }
@@ -565,6 +578,8 @@ public class DebugApiController {
                                 slot.getDisplayName(),
                                 null,
                                 null,
+                                null,
+                                null,
                                 0,
                                 0,
                                 0,
@@ -580,6 +595,8 @@ public class DebugApiController {
                             slot.getDisplayName(),
                             item.getId() == null ? null : item.getId().toString(),
                             item.getName(),
+                            item.getRarity().getId(),
+                            item.getRarity().getDisplayName(),
                             item.getLevel(),
                             item.getStrengthBonus(),
                             item.getIntelligenceBonus(),
@@ -599,6 +616,8 @@ public class DebugApiController {
                         item.getName(),
                         item.getSlot().getId(),
                         item.getSlot().getDisplayName(),
+                        item.getRarity().getId(),
+                        item.getRarity().getDisplayName(),
                         item.getLevel(),
                         item.isEquipped(),
                         item.getGoldValue(),
@@ -769,6 +788,8 @@ public class DebugApiController {
             String displayName,
             String itemId,
             String itemName,
+            String rarity,
+            String rarityDisplayName,
             int level,
             int strengthBonus,
             int intelligenceBonus,
@@ -784,6 +805,8 @@ public class DebugApiController {
             String name,
             String slot,
             String slotDisplayName,
+            String rarity,
+            String rarityDisplayName,
             int level,
             boolean equipped,
             int goldValue,
@@ -808,6 +831,8 @@ public class DebugApiController {
             String name,
             String slot,
             String slotDisplayName,
+            String rarity,
+            String rarityDisplayName,
             int level,
             int price,
             int goldValue,

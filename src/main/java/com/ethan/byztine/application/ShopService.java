@@ -3,6 +3,7 @@ package com.ethan.byztine.application;
 import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemPreset;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class ShopService {
         }
 
         ItemPreset preset = ItemPreset.fromId(presetId);
-        InventoryItem item = InventoryItem.fromPreset(preset, itemLevel);
+        InventoryItem item = InventoryItem.fromPreset(preset, itemLevel, ItemRarity.COMMON);
         int price = calculateBuyPrice(item);
 
         if (price > character.getGold()) {
@@ -64,6 +65,8 @@ public class ShopService {
         return new ShopPurchase(
                 item.getName(),
                 item.getSlot().getDisplayName(),
+                item.getRarity().getId(),
+                item.getRarity().getDisplayName(),
                 item.getLevel(),
                 price,
                 character.getGold());
@@ -82,6 +85,8 @@ public class ShopService {
                 "sold",
                 item.getName(),
                 item.getSlot().getDisplayName(),
+                item.getRarity().getId(),
+                item.getRarity().getDisplayName(),
                 item.getLevel(),
                 salePrice,
                 character.getGold());
@@ -97,13 +102,15 @@ public class ShopService {
                 "destroyed",
                 item.getName(),
                 item.getSlot().getDisplayName(),
+                item.getRarity().getId(),
+                item.getRarity().getDisplayName(),
                 item.getLevel(),
                 0,
                 character.getGold());
     }
 
     private ShopOffer buildOffer(ItemPreset preset, int level, int availableGold) {
-        InventoryItem item = InventoryItem.fromPreset(preset, level);
+        InventoryItem item = InventoryItem.fromPreset(preset, level, ItemRarity.COMMON);
         int price = calculateBuyPrice(item);
 
         return new ShopOffer(
@@ -111,6 +118,8 @@ public class ShopService {
                 item.getName(),
                 item.getSlot().getId(),
                 item.getSlot().getDisplayName(),
+                item.getRarity().getId(),
+                item.getRarity().getDisplayName(),
                 item.getLevel(),
                 price,
                 item.getGoldValue(),
@@ -183,6 +192,8 @@ public class ShopService {
             String name,
             String slot,
             String slotDisplayName,
+            String rarity,
+            String rarityDisplayName,
             int level,
             int price,
             int goldValue,
@@ -199,6 +210,8 @@ public class ShopService {
     public record ShopPurchase(
             String itemName,
             String slotDisplayName,
+            String rarity,
+            String rarityDisplayName,
             int itemLevel,
             int price,
             int goldRemaining) {
@@ -208,6 +221,8 @@ public class ShopService {
             String action,
             String itemName,
             String slotDisplayName,
+            String rarity,
+            String rarityDisplayName,
             int itemLevel,
             int goldDelta,
             int goldRemaining) {

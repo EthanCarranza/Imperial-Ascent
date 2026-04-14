@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ethan.byztine.domain.Character;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 
 import java.util.Optional;
 
@@ -80,6 +81,7 @@ class UserPersistenceTest {
         assertEquals(1, retrieved.get().getCharacter().getInventoryUsage());
         assertEquals(7, retrieved.get().getCharacter().getEffectiveStrength());
         assertEquals(1, retrieved.get().getCharacter().getInventoryItems().get(0).getLevel());
+        assertEquals(ItemRarity.COMMON, retrieved.get().getCharacter().getInventoryItems().get(0).getRarity());
         assertEquals(2, retrieved.get().getCharacter().getWeaponDamageFromEquipment());
         assertTrue(retrieved.get().getCharacter().getEquippedItem(EquipmentSlot.WEAPON).isPresent());
     }

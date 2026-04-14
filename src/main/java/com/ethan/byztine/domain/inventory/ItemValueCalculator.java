@@ -17,8 +17,35 @@ public final class ItemValueCalculator {
             int weaponDamage,
             int armor) {
 
+        return calculateGoldValue(
+                slot,
+                ItemRarity.COMMON,
+                level,
+                strengthBonus,
+                intelligenceBonus,
+                agilityBonus,
+                luckBonus,
+                weaponDamage,
+                armor);
+    }
+
+    public static int calculateGoldValue(
+            EquipmentSlot slot,
+            ItemRarity rarity,
+            int level,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
+
         if (slot == null) {
             throw new IllegalArgumentException("Equipment slot cannot be null");
+        }
+
+        if (rarity == null) {
+            throw new IllegalArgumentException("Item rarity cannot be null");
         }
 
         if (level < 1) {
@@ -35,7 +62,7 @@ public final class ItemValueCalculator {
 
         return Math.max(
                 MIN_GOLD_VALUE,
-                (int) Math.round((baseValue + statValue + combatValue) * levelMultiplier));
+                rarity.scaleValue((int) Math.round((baseValue + statValue + combatValue) * levelMultiplier)));
     }
 
     private static int baseValueFor(EquipmentSlot slot) {

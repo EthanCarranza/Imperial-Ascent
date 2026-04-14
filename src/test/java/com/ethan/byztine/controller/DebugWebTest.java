@@ -13,6 +13,7 @@ import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 import com.ethan.byztine.domain.inventory.ItemValueCalculator;
 import com.ethan.byztine.domain.user.User;
 import com.ethan.byztine.domain.user.UserRepository;
@@ -196,9 +197,11 @@ class DebugWebTest {
                 .andExpect(jsonPath("$.inventoryUsage").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].displayName").value("Weapon"))
                 .andExpect(jsonPath("$.equipmentSlots[0].itemName").value("Sword"))
+                .andExpect(jsonPath("$.equipmentSlots[0].rarity").value("common"))
                 .andExpect(jsonPath("$.equipmentSlots[0].level").value(1))
                 .andExpect(jsonPath("$.equipmentSlots[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.inventoryItems[0].name").value("Sword"))
+                .andExpect(jsonPath("$.inventoryItems[0].rarityDisplayName").value("Common"))
                 .andExpect(jsonPath("$.inventoryItems[0].level").value(1))
                 .andExpect(jsonPath("$.inventoryItems[0].weaponDamage").value(2))
                 .andExpect(jsonPath("$.luck").value(5));
@@ -223,11 +226,12 @@ class DebugWebTest {
                 .param("preset", "training-sword")
                 .param("level", "3"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Granted item: Training Sword [Weapon] Lv.3 value " + expectedValue));
+                .andExpect(content().string("Granted item: Training Sword [Weapon] Common Lv.3 value " + expectedValue));
 
         assertEquals(1, user.getCharacter().getInventoryUsage());
         InventoryItem item = user.getCharacter().getInventoryItems().get(0);
         assertEquals(3, item.getLevel());
+        assertEquals(ItemRarity.COMMON, item.getRarity());
         assertEquals(4, item.getWeaponDamage());
         verify(userRepository).save(user);
     }
@@ -254,12 +258,13 @@ class DebugWebTest {
                 .param("weaponDamage", "3")
                 .param("strengthBonus", "1"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Created item: Bronze Spear [Weapon] Lv.3 value " + expectedValue));
+                .andExpect(content().string("Created item: Bronze Spear [Weapon] Common Lv.3 value " + expectedValue));
 
         assertEquals(1, user.getCharacter().getInventoryUsage());
         InventoryItem item = user.getCharacter().getInventoryItems().get(0);
         assertEquals("Bronze Spear", item.getName());
         assertEquals(3, item.getLevel());
+        assertEquals(ItemRarity.COMMON, item.getRarity());
         assertEquals(expectedValue, item.getGoldValue());
         assertEquals(3, item.getWeaponDamage());
         assertEquals(1, item.getStrengthBonus());
@@ -295,6 +300,8 @@ class DebugWebTest {
                                 "Training Sword",
                                 "weapon",
                                 "Weapon",
+                                "common",
+                                "Common",
                                 2,
                                 84,
                                 62,
@@ -316,6 +323,7 @@ class DebugWebTest {
                 .andExpect(jsonPath("$.gold").value(120))
                 .andExpect(jsonPath("$.offers[0].presetId").value("training-sword"))
                 .andExpect(jsonPath("$.offers[0].name").value("Training Sword"))
+                .andExpect(jsonPath("$.offers[0].rarityDisplayName").value("Common"))
                 .andExpect(jsonPath("$.offers[0].price").value(84))
                 .andExpect(jsonPath("$.offers[0].weaponDamage").value(3))
                 .andExpect(jsonPath("$.offers[0].affordable").value(true));
@@ -327,6 +335,8 @@ class DebugWebTest {
                 .thenReturn(new ShopService.ShopPurchase(
                         "Training Sword",
                         "Weapon",
+                        "common",
+                        "Common",
                         2,
                         84,
                         36));
@@ -337,7 +347,7 @@ class DebugWebTest {
                 .param("level", "2"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Purchased item: Training Sword [Weapon] Lv.2 for 84 gold. Gold left: 36"));
+                        "Purchased item: Training Sword [Weapon] Common Lv.2 for 84 gold. Gold left: 36"));
     }
 
     @Test
@@ -347,6 +357,8 @@ class DebugWebTest {
                         "sold",
                         "Training Sword",
                         "Weapon",
+                        "common",
+                        "Common",
                         2,
                         62,
                         162));
@@ -356,7 +368,7 @@ class DebugWebTest {
                 .param("itemId", "item-1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Sold item: Training Sword [Weapon] Lv.2 for 62 gold. Gold now: 162"));
+                        "Sold item: Training Sword [Weapon] Common Lv.2 for 62 gold. Gold now: 162"));
     }
 
     @Test
@@ -366,6 +378,8 @@ class DebugWebTest {
                         "destroyed",
                         "Porphyry Ring",
                         "Ring",
+                        "common",
+                        "Common",
                         1,
                         0,
                         50));
@@ -375,7 +389,7 @@ class DebugWebTest {
                 .param("itemId", "item-2"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Destroyed item: Porphyry Ring [Ring] Lv.1. Gold unchanged: 50"));
+                        "Destroyed item: Porphyry Ring [Ring] Common Lv.1. Gold unchanged: 50"));
     }
 
     @Test

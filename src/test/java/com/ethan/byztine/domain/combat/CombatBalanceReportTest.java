@@ -6,6 +6,7 @@ import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemPreset;
+import com.ethan.byztine.domain.inventory.ItemRarity;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,8 @@ class CombatBalanceReportTest {
         ItemLoadout[] noItems = new ItemLoadout[0];
         ItemLoadout[] swordLevelOne = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 1) };
         ItemLoadout[] swordLevelFive = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 5) };
+        ItemLoadout[] swordLevelThreeRare = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 3, ItemRarity.RARE) };
+        ItemLoadout[] swordLevelThreeCommon = { new ItemLoadout(ItemPreset.TRAINING_SWORD, 3, ItemRarity.COMMON) };
         ItemLoadout[] fullBasicGearLevelOne = {
                 new ItemLoadout(ItemPreset.TRAINING_SWORD, 1),
                 new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 1),
@@ -39,6 +42,30 @@ class CombatBalanceReportTest {
                 new ItemLoadout(ItemPreset.TAGMATIC_HELM, 5),
                 new ItemLoadout(ItemPreset.PORPHYRY_RING, 5),
                 new ItemLoadout(ItemPreset.IMPERIAL_ICON, 5)
+        };
+        ItemLoadout[] fullBasicGearLevelThreeCommon = {
+                new ItemLoadout(ItemPreset.TRAINING_SWORD, 3),
+                new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 3),
+                new ItemLoadout(ItemPreset.CAVALRY_CLASP, 3),
+                new ItemLoadout(ItemPreset.TAGMATIC_HELM, 3),
+                new ItemLoadout(ItemPreset.PORPHYRY_RING, 3),
+                new ItemLoadout(ItemPreset.IMPERIAL_ICON, 3)
+        };
+        ItemLoadout[] fullBasicGearLevelThreeRare = {
+                new ItemLoadout(ItemPreset.TRAINING_SWORD, 3, ItemRarity.RARE),
+                new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 3, ItemRarity.RARE),
+                new ItemLoadout(ItemPreset.CAVALRY_CLASP, 3, ItemRarity.RARE),
+                new ItemLoadout(ItemPreset.TAGMATIC_HELM, 3, ItemRarity.RARE),
+                new ItemLoadout(ItemPreset.PORPHYRY_RING, 3, ItemRarity.RARE),
+                new ItemLoadout(ItemPreset.IMPERIAL_ICON, 3, ItemRarity.RARE)
+        };
+        ItemLoadout[] fullBasicGearLevelThreeEpic = {
+                new ItemLoadout(ItemPreset.TRAINING_SWORD, 3, ItemRarity.EPIC),
+                new ItemLoadout(ItemPreset.LAMELLAR_ARMOR, 3, ItemRarity.EPIC),
+                new ItemLoadout(ItemPreset.CAVALRY_CLASP, 3, ItemRarity.EPIC),
+                new ItemLoadout(ItemPreset.TAGMATIC_HELM, 3, ItemRarity.EPIC),
+                new ItemLoadout(ItemPreset.PORPHYRY_RING, 3, ItemRarity.EPIC),
+                new ItemLoadout(ItemPreset.IMPERIAL_ICON, 3, ItemRarity.EPIC)
         };
 
         FighterSpec baseSpec = new FighterSpec("Base", 1, 5, 5, 5, 5);
@@ -99,6 +126,14 @@ class CombatBalanceReportTest {
                 swordLevelFive,
                 noItems);
 
+        MatchupReport swordRareVsCommon = simulateMatchup(
+                "Sword Lv3 Rare vs Sword Lv3 Common",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                swordLevelThreeRare,
+                swordLevelThreeCommon);
+
         MatchupReport fullGearVsBase = simulateMatchup(
                 "Base + Full Gear Lv1 vs Base",
                 baseSpec,
@@ -114,6 +149,22 @@ class CombatBalanceReportTest {
                 BASE_SEED,
                 fullBasicGearLevelFive,
                 noItems);
+
+        MatchupReport fullGearRareVsCommon = simulateMatchup(
+                "Full Gear Lv3 Rare vs Full Gear Lv3 Common",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                fullBasicGearLevelThreeRare,
+                fullBasicGearLevelThreeCommon);
+
+        MatchupReport fullGearEpicVsRare = simulateMatchup(
+                "Full Gear Lv3 Epic vs Full Gear Lv3 Rare",
+                baseSpec,
+                baseSpec,
+                BASE_SEED,
+                fullBasicGearLevelThreeEpic,
+                fullBasicGearLevelThreeRare);
 
         MatchupReport strongNakedVsFullGear = simulateMatchup(
                 "STR +6 Naked vs Full Gear Lv1",
@@ -242,8 +293,11 @@ class CombatBalanceReportTest {
                 luckVsBase,
                 swordVsBase,
                 swordLevelFiveVsBase,
+                swordRareVsCommon,
                 fullGearVsBase,
                 fullGearLevelFiveVsBase,
+                fullGearRareVsCommon,
+                fullGearEpicVsRare,
                 strongNakedVsFullGear,
                 strongNakedVsFullGearLevelFive,
                 allStatsPlus10VsBase,
@@ -275,8 +329,11 @@ class CombatBalanceReportTest {
         assertTrue(luckVsBase.leftWinRate() < 0.70);
         assertTrue(swordVsBase.leftWinRate() > baseVsBase.leftWinRate());
         assertTrue(swordLevelFiveVsBase.leftWinRate() > swordVsBase.leftWinRate());
+        assertTrue(swordRareVsCommon.leftWinRate() > 0.50);
         assertTrue(fullGearVsBase.leftWinRate() > swordVsBase.leftWinRate());
         assertTrue(fullGearLevelFiveVsBase.leftWinRate() > fullGearVsBase.leftWinRate());
+        assertTrue(fullGearRareVsCommon.leftWinRate() > 0.50);
+        assertTrue(fullGearEpicVsRare.leftWinRate() > 0.50);
         assertTrue(strongNakedVsFullGear.leftWinRate() > 0.05);
         assertTrue(strongNakedVsFullGear.leftWinRate() < 0.50);
         assertTrue(strongNakedVsFullGearLevelFive.leftWinRate() < strongNakedVsFullGear.leftWinRate());
@@ -427,7 +484,7 @@ class CombatBalanceReportTest {
         Character character = buildCharacter(spec);
 
         for (ItemLoadout itemPreset : itemPresets) {
-            InventoryItem item = InventoryItem.fromPreset(itemPreset.preset(), itemPreset.level());
+            InventoryItem item = InventoryItem.fromPreset(itemPreset.preset(), itemPreset.level(), itemPreset.rarity());
             character.addItem(item);
             character.equipItem(item.getId());
         }
@@ -540,7 +597,12 @@ class CombatBalanceReportTest {
 
     private record ItemLoadout(
             ItemPreset preset,
-            int level) {
+            int level,
+            ItemRarity rarity) {
+
+        private ItemLoadout(ItemPreset preset, int level) {
+            this(preset, level, ItemRarity.COMMON);
+        }
     }
 
     private record SeriesReport(

@@ -73,6 +73,15 @@ const formatStatSummary = (item) => {
   return parts.length > 0 ? parts.join(" | ") : "No stat bonus";
 };
 
+const rarityClassName = (rarity) => `rarity-badge--${(rarity || "common").toLowerCase()}`;
+
+function createRarityBadge(rarity, label) {
+  const badge = document.createElement("span");
+  badge.className = `rarity-badge ${rarityClassName(rarity)}`;
+  badge.textContent = label ?? "Common";
+  return badge;
+}
+
 function updateCharacterSheet(sheet) {
   const profileCard = getById("profileCard");
   if (profileCard) {
@@ -139,7 +148,13 @@ function createSlotCard(slot) {
   bonus.className = "slot-card__bonus";
   bonus.textContent = formatStatSummary(slot);
 
-  card.append(slotLabel, title, level, combat, bonus);
+  card.append(slotLabel);
+
+  if (slot.itemName) {
+    card.append(createRarityBadge(slot.rarity, slot.rarityDisplayName));
+  }
+
+  card.append(title, level, combat, bonus);
 
   if (slot.itemName) {
     const button = document.createElement("button");
@@ -173,6 +188,8 @@ function createInventoryItemCell(item) {
   slot.className = "inventory-item__slot";
   slot.textContent = item.slotDisplayName;
 
+  const rarity = createRarityBadge(item.rarity, item.rarityDisplayName);
+
   const title = document.createElement("strong");
   title.className = "inventory-item__name";
   title.textContent = item.name;
@@ -193,7 +210,7 @@ function createInventoryItemCell(item) {
   value.className = "inventory-item__value";
   value.textContent = `${item.goldValue} sell value`;
 
-  cell.append(slot, title, level, combat, bonus, value);
+  cell.append(slot, rarity, title, level, combat, bonus, value);
 
   const actionRow = document.createElement("div");
   actionRow.className = "inventory-item__actions";
@@ -291,13 +308,15 @@ function createShopOfferCard(offer) {
   slot.className = "shop-card__slot";
   slot.textContent = offer.slotDisplayName;
 
+  const rarity = createRarityBadge(offer.rarity, offer.rarityDisplayName);
+
   const title = document.createElement("strong");
   title.className = "shop-card__name";
   title.textContent = offer.name;
 
   const level = document.createElement("div");
   level.className = "shop-card__level";
-  level.textContent = `Lv. ${offer.level} Common`;
+  level.textContent = `Lv. ${offer.level}`;
 
   const combat = document.createElement("div");
   combat.className = "shop-card__combat";
@@ -323,7 +342,7 @@ function createShopOfferCard(offer) {
   button.disabled = !offer.affordable;
   button.textContent = offer.affordable ? "Buy" : "Need Gold";
 
-  card.append(slot, title, level, combat, bonus, price, value, button);
+  card.append(slot, rarity, title, level, combat, bonus, price, value, button);
   return card;
 }
 

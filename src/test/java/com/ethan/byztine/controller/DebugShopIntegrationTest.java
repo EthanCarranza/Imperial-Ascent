@@ -51,6 +51,7 @@ class DebugShopIntegrationTest {
                 .andExpect(jsonPath("$.selectedLevel").value(2))
                 .andExpect(jsonPath("$.gold").value(200))
                 .andExpect(jsonPath("$.offers[0].presetId").value("training-sword"))
+                .andExpect(jsonPath("$.offers[0].rarityDisplayName").value("Common"))
                 .andExpect(jsonPath("$.offers[0].level").value(2))
                 .andExpect(jsonPath("$.offers[0].weaponDamage").value(3))
                 .andExpect(jsonPath("$.offers[0].price").value(expectedPrice))
@@ -90,7 +91,7 @@ class DebugShopIntegrationTest {
                 .param("level", "2"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Purchased item: Training Sword [Weapon] Lv.2 for "
+                        "Purchased item: Training Sword [Weapon] Common Lv.2 for "
                                 + expectedPrice + " gold. Gold left: " + (200 - expectedPrice)));
 
         User reloaded = userRepository.findByEmail(user.getEmail()).orElseThrow();
@@ -98,6 +99,7 @@ class DebugShopIntegrationTest {
         assertEquals(200 - expectedPrice, reloaded.getCharacter().getGold());
         assertEquals(1, reloaded.getCharacter().getInventoryUsage());
         assertEquals("Training Sword", reloaded.getCharacter().getInventoryItems().get(0).getName());
+        assertEquals("Common", reloaded.getCharacter().getInventoryItems().get(0).getRarity().getDisplayName());
         assertEquals(2, reloaded.getCharacter().getInventoryItems().get(0).getLevel());
         assertTrue(reloaded.getCharacter().getInventoryItems().stream().noneMatch(InventoryItem::isEquipped));
     }
@@ -117,7 +119,7 @@ class DebugShopIntegrationTest {
                 .param("itemId", sword.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Sold item: Training Sword [Weapon] Lv.2 for "
+                        "Sold item: Training Sword [Weapon] Common Lv.2 for "
                                 + sword.getGoldValue() + " gold. Gold now: " + sword.getGoldValue()));
 
         User reloaded = userRepository.findByEmail(user.getEmail()).orElseThrow();
@@ -142,7 +144,7 @@ class DebugShopIntegrationTest {
                 .param("itemId", ring.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(
-                        "Destroyed item: Porphyry Ring [Ring] Lv.1. Gold unchanged: 40"));
+                        "Destroyed item: Porphyry Ring [Ring] Common Lv.1. Gold unchanged: 40"));
 
         User reloaded = userRepository.findByEmail(user.getEmail()).orElseThrow();
 

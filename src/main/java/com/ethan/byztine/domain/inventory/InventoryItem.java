@@ -25,6 +25,10 @@ public class InventoryItem {
     @Column(nullable = false)
     private EquipmentSlot slot;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ItemRarity rarity;
+
     @Column(nullable = false)
     private int level;
 
@@ -63,7 +67,7 @@ public class InventoryItem {
             int intelligenceBonus,
             int agilityBonus,
             int luckBonus) {
-        this(name, slot, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, 0, 0);
+        this(name, slot, ItemRarity.COMMON, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, 0, 0);
     }
 
     public InventoryItem(
@@ -76,12 +80,27 @@ public class InventoryItem {
             int luckBonus,
             int weaponDamage,
             int armor) {
-        this(name, slot, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, weaponDamage, armor);
+        this(name, slot, ItemRarity.COMMON, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, weaponDamage, armor);
+    }
+
+    public InventoryItem(
+            String name,
+            EquipmentSlot slot,
+            ItemRarity rarity,
+            int goldValue,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
+        this(name, slot, rarity, 1, goldValue, strengthBonus, intelligenceBonus, agilityBonus, luckBonus, weaponDamage, armor);
     }
 
     private InventoryItem(
             String name,
             EquipmentSlot slot,
+            ItemRarity rarity,
             int level,
             int goldValue,
             int strengthBonus,
@@ -99,6 +118,10 @@ public class InventoryItem {
             throw new IllegalArgumentException("Item slot cannot be null");
         }
 
+        if (rarity == null) {
+            throw new IllegalArgumentException("Item rarity cannot be null");
+        }
+
         if (level < 1) {
             throw new IllegalArgumentException("Item level must be at least 1");
         }
@@ -109,6 +132,7 @@ public class InventoryItem {
 
         this.name = name;
         this.slot = slot;
+        this.rarity = rarity;
         this.level = level;
         this.goldValue = goldValue;
         this.id = UUID.randomUUID();
@@ -132,12 +156,39 @@ public class InventoryItem {
             int weaponDamage,
             int armor) {
 
+        return scaled(
+                name,
+                slot,
+                ItemRarity.COMMON,
+                level,
+                strengthBonus,
+                intelligenceBonus,
+                agilityBonus,
+                luckBonus,
+                weaponDamage,
+                armor);
+    }
+
+    public static InventoryItem scaled(
+            String name,
+            EquipmentSlot slot,
+            ItemRarity rarity,
+            int level,
+            int strengthBonus,
+            int intelligenceBonus,
+            int agilityBonus,
+            int luckBonus,
+            int weaponDamage,
+            int armor) {
+
         return new InventoryItem(
                 name,
                 slot,
+                rarity,
                 level,
                 ItemValueCalculator.calculateGoldValue(
                         slot,
+                        rarity,
                         level,
                         strengthBonus,
                         intelligenceBonus,
@@ -158,11 +209,15 @@ public class InventoryItem {
     }
 
     public static InventoryItem fromPreset(ItemPreset preset, int level) {
+        return fromPreset(preset, level, ItemRarity.COMMON);
+    }
+
+    public static InventoryItem fromPreset(ItemPreset preset, int level, ItemRarity rarity) {
         if (preset == null) {
             throw new IllegalArgumentException("Item preset cannot be null");
         }
 
-        return preset.toItem(level);
+        return preset.toItem(level, rarity);
     }
 
     public UUID getId() {
@@ -175,6 +230,10 @@ public class InventoryItem {
 
     public EquipmentSlot getSlot() {
         return slot;
+    }
+
+    public ItemRarity getRarity() {
+        return rarity;
     }
 
     public int getLevel() {

@@ -42,4 +42,19 @@ class ItemValueCalculatorTest {
         assertEquals(6, levelFiveSword.getWeaponDamage());
         assertTrue(levelFiveSword.getGoldValue() > levelOneSword.getGoldValue());
     }
+
+    @Test
+    void higherRarityShouldIncreaseScaledPowerAndValue() {
+        InventoryItem commonSword = InventoryItem.fromPreset(ItemPreset.TRAINING_SWORD, 3, ItemRarity.COMMON);
+        InventoryItem rareSword = InventoryItem.fromPreset(ItemPreset.TRAINING_SWORD, 3, ItemRarity.RARE);
+        InventoryItem epicSword = InventoryItem.fromPreset(ItemPreset.TRAINING_SWORD, 3, ItemRarity.EPIC);
+
+        assertEquals(ItemRarity.COMMON, commonSword.getRarity());
+        assertEquals(ItemRarity.RARE, rareSword.getRarity());
+        assertEquals(ItemRarity.EPIC, epicSword.getRarity());
+        assertTrue(rareSword.getWeaponDamage() > commonSword.getWeaponDamage());
+        assertTrue(epicSword.getWeaponDamage() > rareSword.getWeaponDamage());
+        assertTrue(rareSword.getGoldValue() > commonSword.getGoldValue());
+        assertTrue(epicSword.getGoldValue() > rareSword.getGoldValue());
+    }
 }

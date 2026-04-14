@@ -493,6 +493,44 @@ button:disabled {
   font-weight: 700;
 }
 
+.rarity-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 1.6rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rarity-badge--common {
+  border-color: rgba(214, 177, 104, 0.22);
+  background: rgba(247, 240, 248, 0.52);
+  color: #6b4a24;
+}
+
+.rarity-badge--uncommon {
+  border-color: rgba(75, 130, 78, 0.28);
+  background: rgba(214, 239, 215, 0.54);
+  color: #315736;
+}
+
+.rarity-badge--rare {
+  border-color: rgba(60, 94, 157, 0.32);
+  background: rgba(212, 226, 255, 0.62);
+  color: #29446f;
+}
+
+.rarity-badge--epic {
+  border-color: rgba(120, 57, 132, 0.32);
+  background: rgba(236, 214, 245, 0.68);
+  color: #5b2561;
+}
+
 .satchel {
   margin-top: 1rem;
   padding: 0.95rem;
@@ -609,7 +647,7 @@ button:disabled {
 
 .inventory-item__actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
   margin-top: auto;
 }
