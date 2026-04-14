@@ -3,12 +3,18 @@ package com.ethan.byztine.domain.inventory;
 import java.util.Locale;
 
 public enum ItemPreset {
-    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 0, 0, 0, 0, 2, 0),
-    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 0, 0, 0, 0, 0, 1),
-    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 0, 0, 1, 0, 0, 0),
-    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 0, 0, 0, 0, 0, 1),
-    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 0, 1, 0, 0, 0, 0),
-    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 0, 0, 0, 1, 0, 0);
+    TRAINING_SWORD("training-sword", "Training Sword", EquipmentSlot.WEAPON, 0, 0, 0, 0, 2, 0, true),
+    LAMELLAR_ARMOR("lamellar-armor", "Lamellar Armor", EquipmentSlot.ARMOR, 0, 0, 0, 0, 0, 1, true),
+    CAVALRY_CLASP("cavalry-clasp", "Cavalry Clasp", EquipmentSlot.ACCESSORY, 0, 0, 1, 0, 0, 0, true),
+    TAGMATIC_HELM("tagmatic-helm", "Tagmatic Helm", EquipmentSlot.HELM, 0, 0, 0, 0, 0, 1, true),
+    PORPHYRY_RING("porphyry-ring", "Porphyry Ring", EquipmentSlot.RING, 0, 1, 0, 0, 0, 0, true),
+    IMPERIAL_ICON("imperial-icon", "Imperial Icon", EquipmentSlot.RELIC, 0, 0, 0, 1, 0, 0, true),
+    RUSTED_KOPIS("rusted-kopis", "Rusted Kopis", EquipmentSlot.WEAPON, 1, 0, 0, 0, 2, 0, false),
+    PILFERED_LAMELLAR("pilfered-lamellar", "Pilfered Lamellar", EquipmentSlot.ARMOR, 1, 0, 0, 0, 0, 1, false),
+    LOOKOUT_CLASP("lookout-clasp", "Lookout Clasp", EquipmentSlot.ACCESSORY, 0, 0, 1, 1, 0, 0, false),
+    OUTLAW_HELM("outlaw-helm", "Outlaw Helm", EquipmentSlot.HELM, 0, 0, 1, 0, 0, 1, false),
+    SMUGGLER_RING("smuggler-ring", "Smuggler Ring", EquipmentSlot.RING, 0, 1, 0, 1, 0, 0, false),
+    STOLEN_ICON("stolen-icon", "Stolen Icon", EquipmentSlot.RELIC, 1, 0, 0, 1, 0, 0, false);
 
     private final String id;
     private final String displayName;
@@ -19,6 +25,7 @@ public enum ItemPreset {
     private final int luckBonus;
     private final int weaponDamage;
     private final int armor;
+    private final boolean shopEligible;
 
     ItemPreset(
             String id,
@@ -29,7 +36,8 @@ public enum ItemPreset {
             int agilityBonus,
             int luckBonus,
             int weaponDamage,
-            int armor) {
+            int armor,
+            boolean shopEligible) {
 
         this.id = id;
         this.displayName = displayName;
@@ -40,6 +48,7 @@ public enum ItemPreset {
         this.luckBonus = luckBonus;
         this.weaponDamage = weaponDamage;
         this.armor = armor;
+        this.shopEligible = shopEligible;
     }
 
     public String getId() {
@@ -76,6 +85,10 @@ public enum ItemPreset {
 
     public int getArmor() {
         return armor;
+    }
+
+    public boolean isShopEligible() {
+        return shopEligible;
     }
 
     public InventoryItem toItem(int level) {

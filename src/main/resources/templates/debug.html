@@ -30,6 +30,7 @@
             <a href="#lookup-section">Registro</a>
             <a href="#profile-section">Ficha</a>
             <a href="#armory-section">Armeria</a>
+            <a href="#exploration-section">Exploracion</a>
             <a href="#shop-section">Tienda</a>
             <a href="#command-section">Comandos</a>
             <a href="#console-section">Consola</a>
@@ -243,6 +244,35 @@
                 <button class="full-span" type="submit">Fight Preset</button>
               </form>
               <div class="preset-row"><span>Recruit</span><span>Skirmisher</span><span>Brute</span><span>Duelist</span><span>Gambler</span><span>Veteran</span></div>
+            </article>
+
+            <article class="frame-card tool-card" id="exploration-section">
+              <div class="card-head">
+                <p class="eyebrow">Exploration</p>
+                <h3>Zonas, encuentros y loot</h3>
+                <p class="muted">Cada enemigo suelta piezas concretas. Si quieres completar el set, no puedes spammear solo uno.</p>
+              </div>
+              <form class="form-grid" data-debug-form="true" data-log-label="Exploration" action="/api/debug/explore" method="post">
+                <label class="field"><span>Email</span><input name="email" type="email" placeholder="Email" data-active-character="true" autocomplete="off" /></label>
+                <label class="field"><span>Zone</span><select name="zone" id="explorationZoneSelect" disabled><option value="">Loading zones...</option></select></label>
+                <label class="field full-span"><span>Encounter</span><select name="encounter" id="explorationEncounterSelect" disabled><option value="">Select a zone</option></select></label>
+                <button class="full-span" type="submit">Run Exploration Fight</button>
+              </form>
+              <div class="exploration-preview" id="explorationPreview">
+                <div class="exploration-preview__head">
+                  <strong id="explorationZoneName">No zone loaded</strong>
+                  <span id="explorationZoneRange">Recommended Lv. --</span>
+                </div>
+                <p class="muted" id="explorationZoneDescription">Carga el catalogo para ver la primera zona de exploracion.</p>
+                <div class="exploration-metrics">
+                  <span class="exploration-pill" id="explorationEncounterName">Encounter --</span>
+                  <span class="exploration-pill" id="explorationEncounterMeta">Lv. --</span>
+                  <span class="exploration-pill" id="explorationEncounterRewards">XP -- | Gold --</span>
+                  <span class="exploration-pill" id="explorationEncounterDropChance">Drop --</span>
+                </div>
+                <div class="exploration-stats" id="explorationEncounterStats">STR -- | INT -- | AGI -- | LUCK --</div>
+                <div class="exploration-drops" id="explorationEncounterDrops">Loot preview unavailable.</div>
+              </div>
             </article>
 
             <article class="frame-card tool-card" id="shop-section">

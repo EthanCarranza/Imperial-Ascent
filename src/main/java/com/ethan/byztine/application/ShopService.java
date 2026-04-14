@@ -31,6 +31,7 @@ public class ShopService {
         int selectedLevel = resolveRequestedLevel(character, requestedLevel, "Shop level");
 
         List<ShopOffer> offers = Arrays.stream(ItemPreset.values())
+                .filter(ItemPreset::isShopEligible)
                 .map(preset -> buildOffer(preset, selectedLevel, character.getGold()))
                 .toList();
 

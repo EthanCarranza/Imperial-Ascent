@@ -1,4 +1,10 @@
-const state = { activeEmail: null, activeName: null, shopLevel: null };
+const state = {
+  activeEmail: null,
+  activeName: null,
+  shopLevel: null,
+  explorationZones: [],
+  explorationZoneId: null,
+};
 const defaultEquipmentSlots = [
   { slot: "weapon", displayName: "Weapon", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
   { slot: "armor", displayName: "Armor", itemName: null, level: 0, strengthBonus: 0, intelligenceBonus: 0, agilityBonus: 0, luckBonus: 0, weaponDamage: 0, armor: 0 },
@@ -80,6 +86,169 @@ function createRarityBadge(rarity, label) {
   badge.className = `rarity-badge ${rarityClassName(rarity)}`;
   badge.textContent = label ?? "Common";
   return badge;
+}
+
+function getSelectedExplorationZone() {
+  const select = getById("explorationZoneSelect");
+  const zoneId = select?.value || state.explorationZoneId;
+
+  return (
+    state.explorationZones.find((zone) => zone.id === zoneId) ??
+    state.explorationZones[0] ??
+    null
+  );
+}
+
+function getSelectedExplorationEncounter() {
+  const zone = getSelectedExplorationZone();
+  const select = getById("explorationEncounterSelect");
+
+  if (!zone) {
+    return null;
+  }
+
+  return (
+    zone.encounters?.find((encounter) => encounter.id === select?.value) ??
+    zone.encounters?.[0] ??
+    null
+  );
+}
+
+function syncExplorationZoneOptions() {
+  const select = getById("explorationZoneSelect");
+  if (!select) {
+    return;
+  }
+
+  select.replaceChildren();
+
+  if (!state.explorationZones.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No zones available";
+    select.append(option);
+    select.disabled = true;
+    return;
+  }
+
+  const requestedZoneId =
+    select.value || state.explorationZoneId || state.explorationZones[0].id;
+  const zoneId = state.explorationZones.some((zone) => zone.id === requestedZoneId)
+    ? requestedZoneId
+    : state.explorationZones[0].id;
+
+  state.explorationZoneId = zoneId;
+
+  state.explorationZones.forEach((zone) => {
+    const option = document.createElement("option");
+    option.value = zone.id;
+    option.textContent = zone.displayName;
+    option.selected = zone.id === zoneId;
+    select.append(option);
+  });
+
+  select.disabled = false;
+}
+
+function syncExplorationEncounterOptions(preferredEncounterId = null) {
+  const select = getById("explorationEncounterSelect");
+  const zone = getSelectedExplorationZone();
+
+  if (!select) {
+    return;
+  }
+
+  select.replaceChildren();
+
+  if (!zone || !zone.encounters?.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No encounters available";
+    select.append(option);
+    select.disabled = true;
+    return;
+  }
+
+  const requestedEncounterId = preferredEncounterId || select.value || zone.encounters[0].id;
+  const encounterId = zone.encounters.some(
+    (encounter) => encounter.id === requestedEncounterId,
+  )
+    ? requestedEncounterId
+    : zone.encounters[0].id;
+
+  zone.encounters.forEach((encounter) => {
+    const option = document.createElement("option");
+    option.value = encounter.id;
+    option.textContent = `${encounter.displayName}${encounter.boss ? " | Boss" : ""}`;
+    option.selected = encounter.id === encounterId;
+    select.append(option);
+  });
+
+  select.disabled = false;
+}
+
+function updateExplorationPreview() {
+  const zone = getSelectedExplorationZone();
+  const encounter = getSelectedExplorationEncounter();
+
+  if (!zone) {
+    setText("explorationZoneName", "No zone loaded");
+    setText("explorationZoneRange", "Recommended Lv. --");
+    setText(
+      "explorationZoneDescription",
+      "Carga el catalogo para ver la primera zona de exploracion.",
+    );
+    setText("explorationEncounterName", "Encounter --");
+    setText("explorationEncounterMeta", "Lv. --");
+    setText("explorationEncounterRewards", "XP -- | Gold --");
+    setText("explorationEncounterDropChance", "Drop --");
+    setText("explorationEncounterStats", "STR -- | INT -- | AGI -- | LUCK --");
+    setText("explorationEncounterDrops", "Loot preview unavailable.");
+    return;
+  }
+
+  setText("explorationZoneName", zone.displayName);
+  setText(
+    "explorationZoneRange",
+    `Recommended Lv. ${zone.recommendedLevelMin}-${zone.recommendedLevelMax}`,
+  );
+  setText("explorationZoneDescription", zone.description);
+
+  if (!encounter) {
+    setText("explorationEncounterName", "Encounter --");
+    setText("explorationEncounterMeta", "Lv. --");
+    setText("explorationEncounterRewards", "XP -- | Gold --");
+    setText("explorationEncounterDropChance", "Drop --");
+    setText("explorationEncounterStats", "STR -- | INT -- | AGI -- | LUCK --");
+    setText("explorationEncounterDrops", "Loot preview unavailable.");
+    return;
+  }
+
+  setText("explorationEncounterName", encounter.displayName);
+  setText(
+    "explorationEncounterMeta",
+    `Lv. ${encounter.level} | ${encounter.boss ? "Boss" : "Standard"}`,
+  );
+  setText(
+    "explorationEncounterRewards",
+    `Win XP ${encounter.winExperience} | Lose XP ${encounter.lossExperience} | Gold ${encounter.goldReward}`,
+  );
+  setText("explorationEncounterDropChance", `Drop ${encounter.dropChance}%`);
+  setText(
+    "explorationEncounterStats",
+    `STR ${encounter.strength} | INT ${encounter.intelligence} | AGI ${encounter.agility} | LUCK ${encounter.luck}`,
+  );
+  setText(
+    "explorationEncounterDrops",
+    (encounter.possibleDrops ?? []).join(" | ") || "No drops configured.",
+  );
+}
+
+function updateExplorationCatalog(catalog) {
+  state.explorationZones = catalog.zones ?? [];
+  syncExplorationZoneOptions();
+  syncExplorationEncounterOptions();
+  updateExplorationPreview();
 }
 
 function updateCharacterSheet(sheet) {
@@ -391,6 +560,32 @@ function updateShopCatalog(catalog) {
   renderShopOffers(catalog.offers ?? []);
 }
 
+async function loadExplorationZones(options = {}) {
+  const { silent = true } = options;
+
+  try {
+    const response = await fetch("/api/debug/exploration-zones");
+    const payload = await response.json();
+
+    if (!response.ok) {
+      if (!silent) {
+        appendOutput(
+          "Exploration Catalog",
+          payload.message ?? "Exploration catalog unavailable",
+          "error",
+        );
+      }
+      return;
+    }
+
+    updateExplorationCatalog(payload);
+  } catch (error) {
+    if (!silent) {
+      appendOutput("Exploration Catalog", `Error: ${error}`, "error");
+    }
+  }
+}
+
 function appendOutput(title, text, tone = "info") {
   const output = getById("output");
   if (!output) {
@@ -689,6 +884,17 @@ function handleShopLevelChange(event) {
   loadShopOffers(state.activeEmail, { silent: false, log: false });
 }
 
+function handleExplorationZoneChange() {
+  const zone = getSelectedExplorationZone();
+  state.explorationZoneId = zone?.id ?? null;
+  syncExplorationEncounterOptions();
+  updateExplorationPreview();
+}
+
+function handleExplorationEncounterChange() {
+  updateExplorationPreview();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderEquipmentSlots(defaultEquipmentSlots);
   renderInventory([], 12);
@@ -696,9 +902,13 @@ document.addEventListener("DOMContentLoaded", () => {
   setText("inventoryUsage", "0 / 12");
   setText("shopSummary", "Carga un personaje para ver la tienda.");
   setText("shopGoldStatus", "Gold --");
+  updateExplorationPreview();
 
   getById("lookupForm")?.addEventListener("submit", loadCharacterFromForm);
   getById("shopLevelSelect")?.addEventListener("change", handleShopLevelChange);
+  getById("explorationZoneSelect")?.addEventListener("change", handleExplorationZoneChange);
+  getById("explorationEncounterSelect")
+    ?.addEventListener("change", handleExplorationEncounterChange);
 
   document.querySelectorAll("[data-debug-form='true']").forEach((form) => {
     form.addEventListener("submit", submitDebugForm);
@@ -709,4 +919,5 @@ document.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", clearConsole);
 
   document.addEventListener("click", handleInventoryClick);
+  loadExplorationZones({ silent: false });
 });

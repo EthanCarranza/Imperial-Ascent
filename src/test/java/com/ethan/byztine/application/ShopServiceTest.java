@@ -25,14 +25,18 @@ class ShopServiceTest {
         repository.save(user);
 
         ShopService.ShopCatalog catalog = service.getCommonOffers(user.getEmail(), 2);
+        long shopEligiblePresets = java.util.Arrays.stream(ItemPreset.values())
+                .filter(ItemPreset::isShopEligible)
+                .count();
 
         assertEquals(3, catalog.characterLevel());
         assertEquals(2, catalog.selectedLevel());
         assertEquals(500, catalog.gold());
-        assertEquals(ItemPreset.values().length, catalog.offers().size());
+        assertEquals(shopEligiblePresets, catalog.offers().size());
         assertTrue(catalog.offers().stream().allMatch(offer -> offer.level() == 2));
         assertTrue(catalog.offers().stream().allMatch(offer -> offer.rarity().equals("common")));
         assertTrue(catalog.offers().stream().allMatch(ShopService.ShopOffer::affordable));
+        assertFalse(catalog.offers().stream().anyMatch(offer -> offer.presetId().equals("rusted-kopis")));
     }
 
     @Test

@@ -13,6 +13,11 @@ import com.ethan.byztine.domain.event.CombatEvent;
 import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.EventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
+import com.ethan.byztine.domain.exploration.ExplorationEncounter;
+import com.ethan.byztine.domain.exploration.ExplorationEvent;
+import com.ethan.byztine.domain.exploration.ExplorationEventResult;
+import com.ethan.byztine.domain.exploration.ExplorationLootEntry;
+import com.ethan.byztine.domain.exploration.ExplorationZone;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemPreset;
@@ -27,10 +32,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -411,6 +418,36 @@ public class DebugApiController {
         });
     }
 
+    @GetMapping("/exploration-zones")
+    public ResponseEntity<?> getExplorationZones() {
+        return ResponseEntity.ok(new ExplorationCatalogResponse(
+                Arrays.stream(ExplorationZone.values())
+                        .map(this::buildExplorationZone)
+                        .toList()));
+    }
+
+    @PostMapping("/explore")
+    public String explore(
+            @RequestParam String email,
+            @RequestParam String zone,
+            @RequestParam String encounter) {
+
+        return handleRequest(() -> {
+            User user = requireUserByEmail(email, "User");
+            Character attacker = requireCharacter(user, "User");
+            ExplorationZone explorationZone = ExplorationZone.fromId(zone);
+            ExplorationEncounter selectedEncounter = ExplorationEncounter.fromZoneAndId(
+                    explorationZone,
+                    encounter);
+
+            EventResult result = executeEventService.executeEvent(
+                    user.getId(),
+                    new ExplorationEvent(combatEngine, selectedEncounter));
+
+            return formatExplorationResponse(attacker, selectedEncounter, result);
+        });
+    }
+
     @GetMapping("/user")
     public String getUser(@RequestParam String email) {
 
@@ -651,7 +688,7 @@ public class DebugApiController {
                 .append(defender.getName())
                 .append("\n")
                 .append("Outcome: ")
-                .append(formatCombatOutcome(attacker, defender, report))
+                .append(formatCombatOutcome(attacker.getName(), defender.getName(), report))
                 .append("\n")
                 .append("Rounds: ")
                 .append(report.getResult().getRounds())
@@ -676,9 +713,73 @@ public class DebugApiController {
         return builder.toString();
     }
 
-    private String formatCombatOutcome(
+    private String formatExplorationResponse(
             Character attacker,
-            Character defender,
+            ExplorationEncounter encounter,
+            EventResult result) {
+
+        if (!(result instanceof ExplorationEventResult explorationResult)) {
+            return "Exploration\n\n"
+                    + "Zone: "
+                    + encounter.getZone().getDisplayName()
+                    + "\nEncounter: "
+                    + encounter.getDisplayName()
+                    + "\n\n"
+                    + result;
+        }
+
+        CombatReport report = explorationResult.getCombatReport();
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Exploration\n\n")
+                .append("Zone: ")
+                .append(explorationResult.getZoneDisplayName())
+                .append("\nEncounter: ")
+                .append(explorationResult.getEncounterDisplayName())
+                .append(" | Lv. ")
+                .append(explorationResult.getEncounterLevel());
+
+        if (explorationResult.isBossEncounter()) {
+            builder.append(" | Boss");
+        }
+
+        builder.append("\n")
+                .append(attacker.getName())
+                .append(" vs ")
+                .append(explorationResult.getEncounterDisplayName())
+                .append("\n")
+                .append("Outcome: ")
+                .append(formatCombatOutcome(
+                        attacker.getName(),
+                        explorationResult.getEncounterDisplayName(),
+                        report))
+                .append("\n")
+                .append("Rounds: ")
+                .append(report.getResult().getRounds())
+                .append("\n")
+                .append("Final HP: ")
+                .append(attacker.getName())
+                .append(" ")
+                .append(report.getAttackerFinalHealth())
+                .append(" | ")
+                .append(explorationResult.getEncounterDisplayName())
+                .append(" ")
+                .append(report.getDefenderFinalHealth());
+
+        for (CombatRoundReport round : report.getRounds()) {
+            builder.append("\n\n")
+                    .append(formatRound(attacker.getName(), explorationResult.getEncounterDisplayName(), round));
+        }
+
+        builder.append("\n\nSummary\n")
+                .append(result);
+
+        return builder.toString();
+    }
+
+    private String formatCombatOutcome(
+            String attackerName,
+            String defenderName,
             CombatReport report) {
 
         if (report.getResult().isDraw()) {
@@ -688,14 +789,69 @@ public class DebugApiController {
         }
 
         String winner = report.getResult().attackerWon()
-                ? attacker.getName()
-                : defender.getName();
+                ? attackerName
+                : defenderName;
 
         if (report.reachedRoundLimit()) {
             return winner + " wins on health after 20 rounds";
         }
 
         return winner + " wins by knockout";
+    }
+
+    private ExplorationZoneResponse buildExplorationZone(ExplorationZone zone) {
+        return new ExplorationZoneResponse(
+                zone.getId(),
+                zone.getDisplayName(),
+                zone.getRecommendedLevelMin(),
+                zone.getRecommendedLevelMax(),
+                zone.getDescription(),
+                zone.getEncounters().stream()
+                        .map(this::buildExplorationEncounter)
+                        .toList());
+    }
+
+    private ExplorationEncounterResponse buildExplorationEncounter(ExplorationEncounter encounter) {
+        return new ExplorationEncounterResponse(
+                encounter.getId(),
+                encounter.getDisplayName(),
+                encounter.getLevel(),
+                encounter.isBoss(),
+                encounter.getStrength(),
+                encounter.getIntelligence(),
+                encounter.getAgility(),
+                encounter.getLuck(),
+                encounter.getEnergyCost(),
+                encounter.getWinExperience(),
+                encounter.getLossExperience(),
+                encounter.getGoldReward(),
+                encounter.getDropChance(),
+                buildExplorationDropPreview(encounter));
+    }
+
+    private List<String> buildExplorationDropPreview(ExplorationEncounter encounter) {
+        Map<String, List<String>> rarityMap = new LinkedHashMap<>();
+        Map<String, String> labels = new LinkedHashMap<>();
+
+        for (ExplorationLootEntry entry : encounter.getLootTable()) {
+            String key = entry.preset().getId() + ":" + entry.level();
+            labels.putIfAbsent(
+                    key,
+                    entry.preset().getDisplayName()
+                            + " ["
+                            + entry.preset().getSlot().getDisplayName()
+                            + "] Lv."
+                            + entry.level());
+            rarityMap.computeIfAbsent(key, ignored -> new ArrayList<>());
+
+            if (!rarityMap.get(key).contains(entry.rarity().getDisplayName())) {
+                rarityMap.get(key).add(entry.rarity().getDisplayName());
+            }
+        }
+
+        return rarityMap.entrySet().stream()
+                .map(entry -> labels.get(entry.getKey()) + " - " + String.join("/", entry.getValue()))
+                .toList();
     }
 
     private String formatRound(
@@ -844,5 +1000,35 @@ public class DebugApiController {
             int armor,
             boolean affordable,
             String bonusSummary) {
+    }
+
+    private record ExplorationCatalogResponse(
+            List<ExplorationZoneResponse> zones) {
+    }
+
+    private record ExplorationZoneResponse(
+            String id,
+            String displayName,
+            int recommendedLevelMin,
+            int recommendedLevelMax,
+            String description,
+            List<ExplorationEncounterResponse> encounters) {
+    }
+
+    private record ExplorationEncounterResponse(
+            String id,
+            String displayName,
+            int level,
+            boolean boss,
+            int strength,
+            int intelligence,
+            int agility,
+            int luck,
+            int energyCost,
+            int winExperience,
+            int lossExperience,
+            int goldReward,
+            int dropChance,
+            List<String> possibleDrops) {
     }
 }

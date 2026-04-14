@@ -11,6 +11,7 @@ import com.ethan.byztine.domain.combat.CombatResult;
 import com.ethan.byztine.domain.combat.CombatRoundReport;
 import com.ethan.byztine.domain.event.CombatEventResult;
 import com.ethan.byztine.domain.event.TrainingEvent;
+import com.ethan.byztine.domain.exploration.ExplorationEventResult;
 import com.ethan.byztine.domain.inventory.EquipmentSlot;
 import com.ethan.byztine.domain.inventory.InventoryItem;
 import com.ethan.byztine.domain.inventory.ItemRarity;
@@ -330,6 +331,18 @@ class DebugWebTest {
     }
 
     @Test
+    void explorationZonesEndpointShouldExposeZoneCatalog() throws Exception {
+        mockMvc.perform(get("/api/debug/exploration-zones"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.zones[0].id").value("bandit-cave"))
+                .andExpect(jsonPath("$.zones[0].displayName").value("Cueva de Bandidos"))
+                .andExpect(jsonPath("$.zones[0].recommendedLevelMin").value(1))
+                .andExpect(jsonPath("$.zones[0].encounters[0].id").value("cave-scout"))
+                .andExpect(jsonPath("$.zones[0].encounters[4].boss").value(true))
+                .andExpect(jsonPath("$.zones[0].encounters[4].possibleDrops[0]").value(org.hamcrest.Matchers.containsString("Outlaw Helm")));
+    }
+
+    @Test
     void buyItemEndpointShouldPurchaseFromShopService() throws Exception {
         when(shopService.buyCommonItem("cassius@test.com", "training-sword", 2))
                 .thenReturn(new ShopService.ShopPurchase(
@@ -435,6 +448,29 @@ class DebugWebTest {
                 });
     }
 
+    @Test
+    void explorationEndpointShouldRenderExplorationCombatReport() throws Exception {
+        User attacker = createUserWithCharacter("explorer@test.com", "Cassius");
+
+        when(userRepository.findByEmail(attacker.getEmail())).thenReturn(Optional.of(attacker));
+        when(executeEventService.executeEvent(eq(attacker.getId()), any()))
+                .thenReturn(createExplorationEventResult());
+
+        mockMvc.perform(post("/api/debug/explore")
+                .param("email", attacker.getEmail())
+                .param("zone", "bandit-cave")
+                .param("encounter", "bandit-chief"))
+                .andExpect(status().isOk())
+                .andExpect(result -> {
+                    String body = result.getResponse().getContentAsString();
+                    assertTrue(body.contains("Exploration"));
+                    assertTrue(body.contains("Zone: Cueva de Bandidos"));
+                    assertTrue(body.contains("Encounter: Bandit Chief | Lv. 3 | Boss"));
+                    assertTrue(body.contains("Cassius vs Bandit Chief"));
+                    assertTrue(body.contains("Drop: Stolen Icon [Relic] Uncommon Lv.3"));
+                });
+    }
+
     private User createUserWithCharacter() {
         return createUserWithCharacter("cassius@test.com", "Cassius");
     }
@@ -469,5 +505,31 @@ class DebugWebTest {
                 false);
 
         return new CombatEventResult(3, 0, 1, 1, 0, report);
+    }
+
+    private ExplorationEventResult createExplorationEventResult() {
+        CombatResult result = new CombatResult(true, 2, false);
+        CombatReport report = new CombatReport(
+                result,
+                java.util.List.of(
+                        new CombatRoundReport(1, 6, 3, 22, 18, true),
+                        new CombatRoundReport(2, 18, 0, 22, 0, false)),
+                22,
+                0,
+                false);
+
+        return new ExplorationEventResult(
+                3,
+                48,
+                1,
+                1,
+                35,
+                report,
+                "Cueva de Bandidos",
+                "Bandit Chief",
+                true,
+                3,
+                true,
+                "Stolen Icon [Relic] Uncommon Lv.3");
     }
 }
